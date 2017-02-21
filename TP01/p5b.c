@@ -11,12 +11,13 @@ int main(int argc, char **argv, char* envp[])
 	while (envp[i] != 0) {
 
 		if ( strncmp(envp[i], str1, 5) == 0)
-			printf("%s", envp[i]+5);
-
+		{
+			printf("%s!\n", envp[i]+5);
+			break;
+		}
 		++i;
 	}
 
-	printf("!\n");
 
 	return 0;
 }
