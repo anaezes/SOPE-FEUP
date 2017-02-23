@@ -4,6 +4,11 @@
 
 int main(int argc, char* argv[]){
 
+  if (argc != 3) {
+  	printf("Wrong number of arguments.\nCall: %s number1 number2\n", argv[0]);
+  	exit(1);
+  }
+
   int n1= atoi(argv[1]);
   int n2 = atoi(argv[2]);
   int n=0;
@@ -20,6 +25,6 @@ int main(int argc, char* argv[]){
 
   }
 
-
+  exit(0);
 
 }
