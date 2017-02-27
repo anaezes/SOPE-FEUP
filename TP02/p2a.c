@@ -11,6 +11,7 @@ int main(int argc, char* argv[]){
   	exit(1);
   }
 
+  int sizebuf=0;
   FILE *src, *dst;
   char buf[BUF_LENGTH];
 
@@ -25,9 +26,12 @@ int main(int argc, char* argv[]){
     exit(2);
   }
 
-  while( ( fgets( buf, BUF_LENGTH, src ) ) != NULL ) {
-    fputs( buf, dst );
+  while( (sizebuf = fread(buf,1, BUF_LENGTH , src)) != 0)
+  {
+    printf("Escreveu\n");
+    fwrite(buf, 1, sizebuf, dst);
   }
+
 
   fclose( src );
   fclose( dst );

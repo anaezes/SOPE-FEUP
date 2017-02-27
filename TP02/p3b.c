@@ -15,7 +15,7 @@
 int main(int argc, char* argv[]){
 
 
-  if (argc != 3) {
+  if (argc != 2 && argc != 3) {
   	printf("Wrong number of arguments.\nCall: %s source destination\n", argv[0]);
   	exit(1);
   }
@@ -36,10 +36,13 @@ int main(int argc, char* argv[]){
     printf("%s\n\n",strerror(1));
     exit(1);
   }
-  if ( ( dst = open( argv[2], O_WRONLY | O_CREAT | O_EXCL , 0644) ) == -1 ) {
-    perror("Error 2");
-    printf("%s\n\n",strerror(2));
-    exit(2);
+  if(argc == 3)
+  {
+    if ( ( dst = open( argv[2], O_WRONLY | O_CREAT | O_EXCL , 0644) ) == -1 ) {
+      perror("Error 2");
+      printf("%s\n\n",strerror(2));
+      exit(2);
+    }
   }
 
   while((readf =read(src, buf, BUF_LENGTH)) != 0)
@@ -49,8 +52,11 @@ int main(int argc, char* argv[]){
       printf("Erro: %s\n\n", strerror(errno));
       break;
     }
+    if(argc == 2)
+    {
+      write(STDOUT_FILENO, buf, readf);
+    }
 
-    write(dst, buf, readf);
 
   }
 
