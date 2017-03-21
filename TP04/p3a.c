@@ -39,7 +39,7 @@ int main(void)
 	action.sa_handler = &sigUSR1_2_handler;
 	sigemptyset(&action.sa_mask);
 	action.sa_flags = 0;
-	int pid = fork();
+
 	while(1)
 	{
 		printf("Value: %d\n", v);
