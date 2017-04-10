@@ -3,6 +3,9 @@
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
+#include <dirent.h>
+#include <sys/stat.h> 
+#include <sys/types.h>
 
 void sigHandler(int signo)
 {
@@ -11,18 +14,18 @@ void sigHandler(int signo)
   {
     case SIGINT:
     {
-          char terminate[100];
+          char terminate[3];
 
           while (1) {
             write(STDOUT_FILENO, "Are you sure you want to terminate (Y/N)?", 42);
-            read(STDIN_FILENO, &terminate,100);
+            read(STDIN_FILENO, &terminate,3);
 
             // If answer Y -> finish. Otherwise, re-ask, unless answer is N.
             if( terminate[1] == '\n' ) {
                 if( terminate[0]=='Y' || terminate[0]=='y' )
-                    _exit(0);
+                    exit(EXIT_FAILURE); //alterei porque estava a originar imensos zoombies
                 else if (terminate[0]=='N' || terminate[0]=='n')
-                    break;
+                    return;
             }
             else
                 write(STDOUT_FILENO, "Answer not accepted\n", 21);
@@ -36,34 +39,58 @@ void sigHandler(int signo)
 
 int main(int argc, char ** argv)
 {
-  struct sigaction action;
-  action.sa_handler = &sigHandler;
+	struct sigaction action;
+	action.sa_handler = &sigHandler;
 	sigemptyset(&action.sa_mask);
 	action.sa_flags = 0;
 
+	if (sigaction(SIGINT,&action,NULL) < 0)
+	{
+		fprintf(stderr,"Unable to install SIGINT handler\n");
+		exit(1);
+	}
+
+	if (argc < 2)
+		printf("This program requires at least 1 argument (directory), example ./sfind / \n"); 
 
 
-  //Installing Handlers
-  if (sigaction(SIGINT,&action,NULL) < 0)
-  {
-    fprintf(stderr,"Unable to install SIGINT handler\n");
-    exit(1);
-  }
+  	//try find
+
+	DIR *directory; 
+	directory = opendir(argv[1]); 
+	struct dirent *curr_node;
+	struct stat status;
 
 
-  //try find
-  int pid = fork();
+	while((curr_node = readdir(directory)) != NULL)
+	{
+		printf("%s\n",(curr_node)->d_name); 
+		stat((curr_node)->d_name,&status); 
+		char *dirName;
+		switch(status.st_mode & S_IFMT) { 
 
-  //Parent
-  if(pid > 0){
-      //sleep(20);
-  }
-  //child
-  else{
+			case(S_IFREG): 
+				//printf("FILE;\n");
+				// do something to regular files ???
+			break; 
 
-      execvp("find", &argv[1]);
-  }
+			case (S_IFDIR): 
+				//printf("DIR;\n");
+				dirName = (curr_node->d_name);
 
-  sleep(5);
-    return 0;
+			if (dirName[0] == '.' && (dirName[1] == '\0' || dirName[1] == '.'))
+				break; 
+			pid_t ppid = getpid();
+
+			if (fork() == 0){ 
+				//printf("\nOpening %s\n ", dirName); 
+				execlp("./sfind","./sfind", dirName, NULL); 
+				//printf("EXEC FAILED! ABORT!\n");
+			} 
+			break; 
+		} 
+		usleep(1000);
+	} 
+
+	return 0;
 }
