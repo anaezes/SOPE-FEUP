@@ -7,8 +7,9 @@
 #include <sys/stat.h> 
 #include <sys/types.h>
 
-#define TYPE_FILE 0
-#define TYPE_DIR 1
+#define TYPE_FILE 	0
+#define TYPE_DIR 	1
+#define TYPE_BOTH 	-1
 
 void sigHandler(int signo)
 {
@@ -45,10 +46,10 @@ void sigHandler(int signo)
 **/
 int parse_type(int argc, char ** argv) {
 	if(argc < 4)
-		return -1;
+		return TYPE_BOTH;
 
 	int found = 0;
-	int return_value = -1;
+	int return_value = TYPE_BOTH;
 	int i = 0;
 	while(!found && i < argc) {
 		if((strcmp(argv[i], "-type") == 0) && (i+1 < argc)) {
@@ -110,14 +111,14 @@ int main(int argc, char ** argv)
 		char *dirName = (curr_node)->d_name;
 
 		//print type file or both
-		if(curr_node->d_type == DT_REG && (type_option == TYPE_FILE || type_option == -1))
+		if(curr_node->d_type == DT_REG && (type_option == TYPE_FILE || type_option == TYPE_BOTH))
 			printf("F: %s\n", dirName);
 		else if(curr_node->d_type == DT_DIR) {
 			//not print this
 			if(strcmp(dirName, ".") == 0 || strcmp(dirName, "..") == 0)
 				continue;
 			//print type dir or both
-			if(type_option == TYPE_DIR || type_option == -1) 
+			if(type_option == TYPE_DIR || type_option == TYPE_BOTH) 
 				printf("D: %s\n", dirName);
 			//sfind in DIR's
 			if (fork() == 0){
