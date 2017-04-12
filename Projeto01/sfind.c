@@ -184,11 +184,12 @@ int main(int argc, char ** argv)
 	while((curr_node = readdir(directory)) != NULL )
 	{
 		char *dirName = (curr_node)->d_name;
-		stat(dirName, &status);
 		char fullPath[sizeof(argv[1])+sizeof(dirName)+1];
 		strcpy(fullPath, argv[1]);
 		strcat(fullPath, "/");
 		strcat(fullPath, dirName);
+
+		stat(fullPath, &status);
 
 		if(permissions != 0 && permissions != get_file_permissions(status))
 			continue;
