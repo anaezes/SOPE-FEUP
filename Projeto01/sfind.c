@@ -139,6 +139,12 @@ int get_file_permissions(struct stat status) {
 	return status.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 }
 
+int has_permissions(unsigned int permissions, struct stat status) {
+	if(permissions == 0 || permissions == get_file_permissions(status))
+		return 1;
+	return 0;
+}
+
 
 int main(int argc, char ** argv)
 {
@@ -188,13 +194,13 @@ int main(int argc, char ** argv)
         strcat(fullPath, dirName);
  
         stat(fullPath, &status);
+	
+		// printf("dirname: %s\n", dirName);
+		// printf("atatus_mode: %o\n", status.st_mode);
+		// printf("permissions: %o\n", permissions);
+		// printf("file permissions: %o\n\n", get_file_permissions(status));
 
-
-		if(permissions != 0 && permissions != get_file_permissions(status))
-			continue;
-
-		if(curr_node->d_type == DT_REG && (type_option == TYPE_FILE || type_option == TYPE_ALL)) {	
-			
+		if(curr_node->d_type == DT_REG && (type_option == TYPE_FILE || type_option == TYPE_BOTH) && has_permissions(permissions, status)){
 			if(name_option == -1)
 				printf("F: %s\n", fullPath);
 			else if(strcmp(dirName, FileName) == 0)
@@ -216,7 +222,7 @@ int main(int argc, char ** argv)
 				continue;
 
 			//print type dir or both
-			if(type_option == TYPE_DIR || type_option == TYPE_ALL) {
+			if((type_option == TYPE_DIR || type_option == TYPE_BOTH) && has_permissions(permissions, status)){
 				if(name_option == -1)
 					printf("D: %s\n", fullPath);
 				else if(strcmp(dirName, FileName) == 0)
