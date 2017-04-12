@@ -19,7 +19,6 @@ void sigHandler(int signo)
 		case SIGINT:
 		{
 			char terminate[3];
-
 			while (1) {
 				write(STDOUT_FILENO, "Are you sure you want to terminate (Y/N)?", 42);
 				read(STDIN_FILENO, &terminate,3);
@@ -119,7 +118,30 @@ char** get_new_args(char* dirName, int argc, char ** argv) {
 	return variables;
 }
 
+long parse_mode(int argc, char** argv){
 
+
+	if(argc<4)
+		return -1;
+
+	int i=0;
+	while(i < argc) {
+
+			if((strcmp(argv[i], "-perm") == 0) && (i+1 < argc)){
+					return strtol(argv[i+1], NULL, 8);
+			}
+
+			i++;
+		}
+
+		return -1;
+
+}
+
+int get_file_permissions(struct stat status){
+
+		return status.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+}
 
 
 int main(int argc, char ** argv)
@@ -145,27 +167,35 @@ int main(int argc, char ** argv)
 	int name_option = parse_name(argc, argv);
 	if(name_option != -1)
 		FileName = argv[name_option];
+	long permissions = parse_mode(argc, argv);
+
 
 	char path[512];
 	strcpy(path, argv[1]);
 	DIR *directory;
 	directory = opendir(argv[1]);
+
+	struct stat status;
 	struct dirent *curr_node;
 
 
 	if (directory == NULL)
-		printf("Error: Failed to Open Directory. Directory was: %s\n", argv[1]);
+		printf("Error: Failed to Open Directory. Directory wsigned as: %s\n", argv[1]);
 
 
 	while((curr_node = readdir(directory)) != NULL )
 	{
 		char *dirName = (curr_node)->d_name;
+		stat(dirName, &status);
 		char fullPath[sizeof(argv[1])+sizeof(dirName)+1];
 		strcpy(fullPath, argv[1]);
 		strcat(fullPath, "/");
 		strcat(fullPath, dirName);
-
 		//print type file or both
+		//printf("status: %o\n", status.st_mode);
+	printf("CMD: %o\n", permissions);
+	printf("FILE: %o\n", get_file_permissions(status));
+	if(permissions == get_file_permissions(status)){
 		if(curr_node->d_type == DT_REG && (type_option == TYPE_FILE || type_option == TYPE_BOTH)){
 			if(name_option == -1)
 				printf("F: %s\n", fullPath);
@@ -201,6 +231,7 @@ int main(int argc, char ** argv)
 				//O pai fica a espera, estilo backtrace
 				wait(NULL);
 			}
+		}
 		}
 	}
 
