@@ -34,8 +34,8 @@ void sigHandler(int signo)
             	write(STDOUT_FILENO, "Answer not accepted\n", 21);
         }
         break;
-		}
-	}
+    }
+}
 }
 
 
@@ -86,12 +86,12 @@ int parse_name(int argc, char** argv)
 	int i=0;
 	while(i < argc) {
 
-			if((strcmp(argv[i], "-name") == 0) && (i+1 < argc))
-				return i+1;
-			i++;
-		}
+		if((strcmp(argv[i], "-name") == 0) && (i+1 < argc))
+			return i+1;
+		i++;
+	}
 
-		return -1;
+	return -1;
 
 }
 
@@ -99,48 +99,42 @@ int parse_name(int argc, char** argv)
 * Build new command with new directory
 * @return new command
 **/
-char** get_new_args(char* dirName, int argc, char ** argv) {
-	//char *str = malloc(512);
+char** get_new_args(char* path, char* dirName, int argc, char ** argv) {
+	strcat(path, "/");
+	strcat(path, dirName);
 
 	char ** variables = malloc((argc+1)*sizeof(char*));
 	for(int i=0; i<argc+1; i++)
 		variables[i] = malloc(1024*sizeof(char*));
 
 	strcpy(variables[0], argv[0]);
-	strcpy(variables[1], dirName);
+	strcpy(variables[1], path);
 
 	for(int i=2; i < argc; i++){
-			strcpy(variables[i], argv[i]);
-		}
-		variables[argc] = NULL;
-		//print_variables(variables, argc);
-		//printf("SIZE FINAL: %i\n", argc);
+		strcpy(variables[i], argv[i]);
+	}
+
+	variables[argc] = NULL;
+
 	return variables;
 }
 
-long parse_mode(int argc, char** argv){
-
-
+unsigned int parse_mode(int argc, char** argv){
 	if(argc<4)
-		return -1;
+		return 0;
 
 	int i=0;
 	while(i < argc) {
+		if((strcmp(argv[i], "-perm") == 0) && (i+1 < argc))
+			return strtol(argv[i+1], NULL, 8);
+		i++;
+	}
 
-			if((strcmp(argv[i], "-perm") == 0) && (i+1 < argc)){
-					return strtol(argv[i+1], NULL, 8);
-			}
-
-			i++;
-		}
-
-		return -1;
-
+	return 0;
 }
 
 int get_file_permissions(struct stat status){
-
-		return status.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+	return status.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 }
 
 
@@ -167,17 +161,16 @@ int main(int argc, char ** argv)
 	int name_option = parse_name(argc, argv);
 	if(name_option != -1)
 		FileName = argv[name_option];
-	long permissions = parse_mode(argc, argv);
-
+	unsigned int permissions = parse_mode(argc, argv);
 
 	char path[512];
 	strcpy(path, argv[1]);
+
 	DIR *directory;
 	directory = opendir(argv[1]);
 
 	struct stat status;
 	struct dirent *curr_node;
-
 
 	if (directory == NULL)
 		printf("Error: Failed to Open Directory. Directory wsigned as: %s\n", argv[1]);
@@ -191,16 +184,15 @@ int main(int argc, char ** argv)
 		strcpy(fullPath, argv[1]);
 		strcat(fullPath, "/");
 		strcat(fullPath, dirName);
-		//print type file or both
-		//printf("status: %o\n", status.st_mode);
-	printf("CMD: %o\n", permissions);
-	printf("FILE: %o\n", get_file_permissions(status));
-	if(permissions == get_file_permissions(status)){
+
+		if(permissions != 0 && permissions != get_file_permissions(status))
+			continue;
+
 		if(curr_node->d_type == DT_REG && (type_option == TYPE_FILE || type_option == TYPE_BOTH)){
 			if(name_option == -1)
 				printf("F: %s\n", fullPath);
 			else if(strcmp(dirName, FileName) == 0)
-						printf("F: %s\n", fullPath);
+				printf("F: %s\n", fullPath);
 
 		}
 		else if(curr_node->d_type == DT_DIR) {
@@ -214,24 +206,18 @@ int main(int argc, char ** argv)
 				if(name_option == -1)
 					printf("D: %s\n", fullPath);
 				else if(strcmp(dirName, FileName) == 0)
-						printf("D: %s\n", fullPath);
+					printf("D: %s\n", fullPath);
 			}
 
 			//sfind in DIR's
 			int pid = fork();
 			if (pid == 0) {
-
-				//Creating new path
-				strcat(path, "/");
-				strcat(path, dirName);
-				execvp(argv[0], get_new_args(path, argc, argv));
+				execvp(argv[0], get_new_args(path, dirName, argc, argv));
 				printf("EXEC FAILED! ABORT!\n");
 			} else {
-				//waitpid(pid, NULL, );
 				//O pai fica a espera, estilo backtrace
 				wait(NULL);
 			}
-		}
 		}
 	}
 
