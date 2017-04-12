@@ -182,6 +182,7 @@ int main(int argc, char ** argv)
  
         stat(fullPath, &status);
 
+
 		if(permissions != 0 && permissions != get_file_permissions(status))
 			continue;
 
