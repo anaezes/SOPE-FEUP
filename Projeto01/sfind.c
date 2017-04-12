@@ -107,19 +107,20 @@ int main(int argc, char ** argv)
 
 	int type_option = parse_type(argc, argv);
 
-	//printf("So far so good. ");
+	char path[512];
+	strcpy(path, argv[1]);
 
 	DIR *directory; 
 	directory = opendir(argv[1]); 
 	struct dirent *curr_node;
 
 	if (directory == NULL)
-		printf("Failed OpendDir\n");
+		printf("Error: Failed to Open Directory. Directory was: %s\n", argv[1]);
 	
 	while((curr_node = readdir(directory)) != NULL )
 	{
 		char *dirName = (curr_node)->d_name;
-		//printf("RIP ME.\n");
+
 		//print type file or both
 		if(curr_node->d_type == DT_REG && (type_option == TYPE_FILE || type_option == TYPE_BOTH))
 			printf("F: %s\n", dirName);
@@ -137,11 +138,16 @@ int main(int argc, char ** argv)
 			//sfind in DIR's
 			int pid = fork();
 			if (pid == 0) {
-				//printf("I'm forking m8!\n");
-				execlp("./sfind","./sfind", get_new_args(dirName, argc, argv), NULL); 
+				
+				//Creating new path
+				strcat(path, "/");
+				strcat( path, dirName);
+
+				execlp("./sfind","./sfind", get_new_args(path, argc, argv), NULL); 
 				printf("EXEC FAILED! ABORT!\n");
 			} else {
-				//waitpid(pid, NULL, )
+				//waitpid(pid, NULL, );
+				//O pai fica a espera, estilo backtrace
 				wait(NULL);
 			}
 		}
