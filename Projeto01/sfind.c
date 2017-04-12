@@ -10,7 +10,8 @@
 
 #define TYPE_FILE 	0
 #define TYPE_DIR 	1
-#define TYPE_BOTH 	-1
+#define TYPE_LINK	2
+#define TYPE_ALL 	-1
 
 void sigHandler(int signo)
 {
@@ -46,10 +47,10 @@ void sigHandler(int signo)
 **/
 int parse_type(int argc, char ** argv) {
 	if(argc < 4)
-		return TYPE_BOTH;
+		return TYPE_ALL;
 
 	int found = 0;
-	int return_value = TYPE_BOTH;
+	int return_value = TYPE_ALL;
 	int i = 0;
 
 	while(!found && i < argc) {
@@ -60,8 +61,12 @@ int parse_type(int argc, char ** argv) {
 
 			if(strcmp(argv[i+1], "f") == 0)
 				return_value = TYPE_FILE;
+			
 			else if(strcmp(argv[i+1], "d") == 0)
 				return_value = TYPE_DIR;
+			
+			else if(strcmp(argv[i+1], "l") == 0)
+				return_value = TYPE_LINK;
 		}
 		i++;
 	}
@@ -169,8 +174,10 @@ int main(int argc, char ** argv)
 	struct stat status;
 	struct dirent *curr_node;
 
-	if (directory == NULL)
-		printf("Error: Failed to Open Directory. Directory wsigned as: %s\n", path);
+	if (directory == NULL) {
+		printf("Error: Failed to Open Directory.\nDirectory was: %s.\n", path);
+		exit(EXIT_FAILURE);
+	}
 
 	while((curr_node = readdir(directory)) != NULL )
 	{
@@ -186,13 +193,22 @@ int main(int argc, char ** argv)
 		if(permissions != 0 && permissions != get_file_permissions(status))
 			continue;
 
-		if(curr_node->d_type == DT_REG && (type_option == TYPE_FILE || type_option == TYPE_BOTH)){
+		if(curr_node->d_type == DT_REG && (type_option == TYPE_FILE || type_option == TYPE_ALL)) {	
+			
 			if(name_option == -1)
 				printf("F: %s\n", fullPath);
 			else if(strcmp(dirName, FileName) == 0)
 				printf("F: %s\n", fullPath);
-
 		}
+		
+		else if(curr_node->d_type == DT_LNK && (type_option == TYPE_LINK || type_option == TYPE_ALL)) {
+			
+			if(name_option == -1)
+				printf("L: %s\n", fullPath);
+			else if(strcmp(dirName, FileName) == 0)
+				printf("L: %s\n", fullPath);
+		}
+
 		else if(curr_node->d_type == DT_DIR) {
 
 			//not print this
@@ -200,12 +216,14 @@ int main(int argc, char ** argv)
 				continue;
 
 			//print type dir or both
-			if(type_option == TYPE_DIR || type_option == TYPE_BOTH){
+			if(type_option == TYPE_DIR || type_option == TYPE_ALL) {
 				if(name_option == -1)
 					printf("D: %s\n", fullPath);
 				else if(strcmp(dirName, FileName) == 0)
-					printf("D: %s\n", fullPath);
+					printf("D: %s\n", fullPath);			
 			}
+		
+
 
 			//sfind in DIR's
 			int pid = fork();
