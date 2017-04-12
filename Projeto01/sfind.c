@@ -72,9 +72,7 @@ int parse_type(int argc, char ** argv) {
 void print_variables(char** var, int argc)
 {
 	for(int i=0; i<argc; i++)
-	{
 		printf("Var: %s\n", var[i]);
-	}
 }
 
 
@@ -92,13 +90,6 @@ int parse_name(int argc, char** argv)
 	}
 
 	return -1;
-
-}
-
-void printVaraibles(char** variables, int argc) {
-	for(int i = 0; i <= argc; i++)
-	printf("%s\n",variables[i]);
-printf("\n\n\n");
 }
 
 /**
@@ -109,7 +100,7 @@ char** get_new_args(char* dirName, int argc, char ** argv) {
 	//char *str = malloc(512);
 
 	char ** variables = malloc((argc+1)*sizeof(char*));
-	for(int i=0; i<argc+1; i++)
+	for(int i=0; i < argc+1; i++)
 		variables[i] = malloc(1024*sizeof(char*));
 
 	strcpy(variables[0], argv[0]);
@@ -125,7 +116,7 @@ char** get_new_args(char* dirName, int argc, char ** argv) {
 
 
 
-unsigned int parse_mode(int argc, char** argv){
+unsigned int parse_mode(int argc, char** argv) {
 	if(argc<4)
 		return 0;
 
@@ -139,7 +130,7 @@ unsigned int parse_mode(int argc, char** argv){
 	return 0;
 }
 
-int get_file_permissions(struct stat status){
+int get_file_permissions(struct stat status) {
 	return status.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 }
 
@@ -183,12 +174,13 @@ int main(int argc, char ** argv)
 
 	while((curr_node = readdir(directory)) != NULL )
 	{
-		char *dirName = (curr_node)->d_name;
-		stat(dirName, &status);
-		char fullPath[sizeof(argv[1])+sizeof(dirName)+1];
-		strcpy(fullPath, argv[1]);
-		strcat(fullPath, "/");
-		strcat(fullPath, dirName);
+        char *dirName = (curr_node)->d_name;
+        char fullPath[sizeof(argv[1])+sizeof(dirName)+1];
+        strcpy(fullPath, argv[1]);
+        strcat(fullPath, "/");
+        strcat(fullPath, dirName);
+ 
+        stat(fullPath, &status);
 
 		if(permissions != 0 && permissions != get_file_permissions(status))
 			continue;
