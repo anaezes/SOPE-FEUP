@@ -6,6 +6,7 @@
 #include <dirent.h>
 #include <sys/stat.h> 
 #include <sys/types.h>
+#include <sys/wait.h>
 
 #define TYPE_FILE 	0
 #define TYPE_DIR 	1
@@ -23,7 +24,7 @@ void sigHandler(int signo)
 				write(STDOUT_FILENO, "Are you sure you want to terminate (Y/N)?", 42);
 				read(STDIN_FILENO, &terminate,3);
 
-            // If answer Y -> finish. Otherwise, re-ask, unless answer is N.
+            	// If answer Y -> finish. Otherwise, re-ask, unless answer is N.
 				if( terminate[1] == '\n' ) {
 					if( terminate[0]=='Y' || terminate[0]=='y' )
                     exit(EXIT_FAILURE); //alterei porque estava a originar imensos zoombies
@@ -51,9 +52,13 @@ int parse_type(int argc, char ** argv) {
 	int found = 0;
 	int return_value = TYPE_BOTH;
 	int i = 0;
+	
 	while(!found && i < argc) {
+		
 		if((strcmp(argv[i], "-type") == 0) && (i+1 < argc)) {
+			
 			found = 1;
+			
 			if(strcmp(argv[i+1], "f") == 0)
 				return_value = TYPE_FILE;
 			else if(strcmp(argv[i+1], "d") == 0)
@@ -102,28 +107,42 @@ int main(int argc, char ** argv)
 
 	int type_option = parse_type(argc, argv);
 
+	//printf("So far so good. ");
+
 	DIR *directory; 
 	directory = opendir(argv[1]); 
 	struct dirent *curr_node;
+
+	if (directory == NULL)
+		printf("Failed OpendDir\n");
 	
 	while((curr_node = readdir(directory)) != NULL )
 	{
 		char *dirName = (curr_node)->d_name;
-
+		//printf("RIP ME.\n");
 		//print type file or both
 		if(curr_node->d_type == DT_REG && (type_option == TYPE_FILE || type_option == TYPE_BOTH))
 			printf("F: %s\n", dirName);
+		
 		else if(curr_node->d_type == DT_DIR) {
+			
 			//not print this
 			if(strcmp(dirName, ".") == 0 || strcmp(dirName, "..") == 0)
 				continue;
+			
 			//print type dir or both
 			if(type_option == TYPE_DIR || type_option == TYPE_BOTH) 
 				printf("D: %s\n", dirName);
+			
 			//sfind in DIR's
-			if (fork() == 0){
+			int pid = fork();
+			if (pid == 0) {
+				//printf("I'm forking m8!\n");
 				execlp("./sfind","./sfind", get_new_args(dirName, argc, argv), NULL); 
 				printf("EXEC FAILED! ABORT!\n");
+			} else {
+				//waitpid(pid, NULL, )
+				wait(NULL);
 			}
 		}
 	} 
