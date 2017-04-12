@@ -95,29 +95,35 @@ int parse_name(int argc, char** argv)
 
 }
 
+void printVaraibles(char** variables, int argc) {
+	for(int i = 0; i <= argc; i++)
+	printf("%s\n",variables[i]);
+printf("\n\n\n");
+}
+
 /**
 * Build new command with new directory
 * @return new command
 **/
-char** get_new_args(char* path, char* dirName, int argc, char ** argv) {
-	strcat(path, "/");
-	strcat(path, dirName);
+char** get_new_args(char* dirName, int argc, char ** argv) {
+	//char *str = malloc(512);
 
 	char ** variables = malloc((argc+1)*sizeof(char*));
 	for(int i=0; i<argc+1; i++)
 		variables[i] = malloc(1024*sizeof(char*));
 
 	strcpy(variables[0], argv[0]);
-	strcpy(variables[1], path);
+	strcpy(variables[1], dirName);
 
 	for(int i=2; i < argc; i++){
 		strcpy(variables[i], argv[i]);
 	}
-
 	variables[argc] = NULL;
-
+	//printVaraibles( variables, argc);
 	return variables;
 }
+
+
 
 unsigned int parse_mode(int argc, char** argv){
 	if(argc<4)
@@ -163,9 +169,9 @@ int main(int argc, char ** argv)
 		FileName = argv[name_option];
 	unsigned int permissions = parse_mode(argc, argv);
 
+
 	char path[512];
 	strcpy(path, argv[1]);
-
 	DIR *directory;
 	directory = opendir(argv[1]);
 
@@ -173,8 +179,7 @@ int main(int argc, char ** argv)
 	struct dirent *curr_node;
 
 	if (directory == NULL)
-		printf("Error: Failed to Open Directory. Directory wsigned as: %s\n", argv[1]);
-
+		printf("Error: Failed to Open Directory. Directory wsigned as: %s\n", path);
 
 	while((curr_node = readdir(directory)) != NULL )
 	{
@@ -212,9 +217,12 @@ int main(int argc, char ** argv)
 			//sfind in DIR's
 			int pid = fork();
 			if (pid == 0) {
-				execvp(argv[0], get_new_args(path, dirName, argc, argv));
+
+				//Creating new path
+				execvp(argv[0], get_new_args(fullPath, argc, argv));
 				printf("EXEC FAILED! ABORT!\n");
 			} else {
+				//waitpid(pid, NULL, );
 				//O pai fica a espera, estilo backtrace
 				wait(NULL);
 			}
