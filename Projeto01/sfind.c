@@ -4,7 +4,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <dirent.h>
-#include <sys/stat.h> 
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -41,8 +41,8 @@ void sigHandler(int signo)
 
 
 /**
-* Verify type of files required by command 
-* @return 0 if file, 1 if directory or -1 if not 
+* Verify type of files required by command
+* @return 0 if file, 1 if directory or -1 if not
 * specified or invalid option
 **/
 int parse_type(int argc, char ** argv) {
@@ -52,13 +52,13 @@ int parse_type(int argc, char ** argv) {
 	int found = 0;
 	int return_value = TYPE_BOTH;
 	int i = 0;
-	
+
 	while(!found && i < argc) {
-		
+
 		if((strcmp(argv[i], "-type") == 0) && (i+1 < argc)) {
-			
+
 			found = 1;
-			
+
 			if(strcmp(argv[i+1], "f") == 0)
 				return_value = TYPE_FILE;
 			else if(strcmp(argv[i+1], "d") == 0)
@@ -70,21 +70,56 @@ int parse_type(int argc, char ** argv) {
 	return return_value;
 }
 
+void print_variables(char** var, int argc)
+{
+	for(int i=0; i<argc; i++)
+	{
+		printf("Var: %s\n", var[i]);
+	}
+}
+
+
+int parse_name(int argc, char** argv)
+{
+	if(argc<4)
+		return -1;
+
+	int i=0;
+	while(i < argc) {
+
+			if((strcmp(argv[i], "-name") == 0) && (i+1 < argc))
+				return i+1;
+			i++;
+		}
+
+		return -1;
+
+}
+
 /**
 * Build new command with new directory
 * @return new command
 **/
-char* get_new_args(char* dirName, int argc, char ** argv) {
-	char *str = malloc(512);
-	strcpy(str, dirName);
+char** get_new_args(char* dirName, int argc, char ** argv) {
+	//char *str = malloc(512);
 
-	for(int i = 2; i < argc; i++){
-		strcat(str, " ");
-		strcat(str, argv[i]);
-	}
+	char ** variables = malloc((argc+1)*sizeof(char*));
+	for(int i=0; i<argc+1; i++)
+		variables[i] = malloc(1024*sizeof(char*));
 
-	return str;
+	strcpy(variables[0], argv[0]);
+	strcpy(variables[1], dirName);
+
+	for(int i=2; i < argc; i++){
+			strcpy(variables[i], argv[i]);
+		}
+		variables[argc] = NULL;
+		//print_variables(variables, argc);
+		//printf("SIZE FINAL: %i\n", argc);
+	return variables;
 }
+
+
 
 
 int main(int argc, char ** argv)
@@ -101,49 +136,65 @@ int main(int argc, char ** argv)
 	}
 
 	if (argc < 2) {
-		printf("This program requires at least 1 argument (directory), example ./sfind / \n"); 
+		printf("This program requires at least 1 argument (directory), example ./sfind / \n");
 		exit(1);
 	}
 
 	int type_option = parse_type(argc, argv);
+	char* FileName=NULL;
+	int name_option = parse_name(argc, argv);
+	if(name_option != -1)
+		FileName = argv[name_option];
 
 	char path[512];
 	strcpy(path, argv[1]);
-
-	DIR *directory; 
-	directory = opendir(argv[1]); 
+	DIR *directory;
+	directory = opendir(argv[1]);
 	struct dirent *curr_node;
+
 
 	if (directory == NULL)
 		printf("Error: Failed to Open Directory. Directory was: %s\n", argv[1]);
-	
+
+
 	while((curr_node = readdir(directory)) != NULL )
 	{
 		char *dirName = (curr_node)->d_name;
+		char fullPath[sizeof(argv[1])+sizeof(dirName)+1];
+		strcpy(fullPath, argv[1]);
+		strcat(fullPath, "/");
+		strcat(fullPath, dirName);
 
 		//print type file or both
-		if(curr_node->d_type == DT_REG && (type_option == TYPE_FILE || type_option == TYPE_BOTH))
-			printf("F: %s\n", dirName);
-		
+		if(curr_node->d_type == DT_REG && (type_option == TYPE_FILE || type_option == TYPE_BOTH)){
+			if(name_option == -1)
+				printf("F: %s\n", fullPath);
+			else if(strcmp(dirName, FileName) == 0)
+						printf("F: %s\n", fullPath);
+
+		}
 		else if(curr_node->d_type == DT_DIR) {
-			
+
 			//not print this
 			if(strcmp(dirName, ".") == 0 || strcmp(dirName, "..") == 0)
 				continue;
-			
+
 			//print type dir or both
-			if(type_option == TYPE_DIR || type_option == TYPE_BOTH) 
-				printf("D: %s\n", dirName);
-			
+			if(type_option == TYPE_DIR || type_option == TYPE_BOTH){
+				if(name_option == -1)
+					printf("D: %s\n", fullPath);
+				else if(strcmp(dirName, FileName) == 0)
+						printf("D: %s\n", fullPath);
+			}
+
 			//sfind in DIR's
 			int pid = fork();
 			if (pid == 0) {
-				
+
 				//Creating new path
 				strcat(path, "/");
-				strcat( path, dirName);
-
-				execlp("./sfind","./sfind", get_new_args(path, argc, argv), NULL); 
+				strcat(path, dirName);
+				execvp(argv[0], get_new_args(path, argc, argv));
 				printf("EXEC FAILED! ABORT!\n");
 			} else {
 				//waitpid(pid, NULL, );
@@ -151,7 +202,7 @@ int main(int argc, char ** argv)
 				wait(NULL);
 			}
 		}
-	} 
+	}
 
 	return 0;
 }
