@@ -8,11 +8,19 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+//MACROS
 #define TYPE_FILE 	0
 #define TYPE_DIR 	1
 #define TYPE_LINK	2
 #define TYPE_ALL 	-1
 
+#define DEL_YES		1
+#define DEL_NO		0
+
+#define PRINT_YES	1
+#define PRINT_NO	0
+
+//FUNCTIONS
 void sigHandler(int signo)
 {
 	switch(signo)
@@ -30,13 +38,13 @@ void sigHandler(int signo)
                     exit(EXIT_FAILURE); //alterei porque estava a originar imensos zoombies
                 else if (terminate[0]=='N' || terminate[0]=='n')
                 	return;
-            }
+            	}
             else
             	write(STDOUT_FILENO, "Answer not accepted\n", 21);
-        }
+        	}
         break;
-    }
-}
+    	}
+	}
 }
 
 
@@ -72,6 +80,58 @@ int parse_type(int argc, char ** argv) {
 	}
 
 	return return_value;
+}
+
+int parse_deletion(int argc, char** argv) {
+
+	int i = 0;
+	while(i < argc) {
+		if((strcmp(argv[i], "-delete") == 0))
+			return DEL_YES;
+		
+		i++;
+	}
+	return DEL_NO;
+}
+
+void delete(int type, char* filePath) {
+
+	//Allocating Space for artificial argv
+	char ** command = malloc((4)*sizeof(char*));
+	for(int i = 0; i < 4; i++)
+		command[i] = malloc(1024*sizeof(char*));
+
+	//Creating artificial argv
+	strcpy(command[0], "rm");
+	strcpy(command[1], filePath);
+
+	//Completing artificial argv
+	switch(type) {
+		case TYPE_FILE:
+		case TYPE_LINK:
+			command[2] = NULL;
+			break;
+
+		case TYPE_DIR:
+			strcpy(command[2], "-d");
+			command[3] = NULL;
+			break;
+	}
+	
+	execvp("rm", command);
+	printf("./sfind Error: Failed on Deletion.\n");
+}
+
+int parse_print(int argc, char** argv) {
+
+	int i = 0;
+	while(i < argc) {
+		if((strcmp(argv[i], "-print") == 0))
+			return PRINT_YES;
+		
+		i++;
+	}
+	return PRINT_NO;
 }
 
 void print_variables(char** var, int argc)
@@ -165,11 +225,14 @@ int main(int argc, char ** argv)
 	}
 
 	int type_option = parse_type(argc, argv);
-	char* FileName=NULL;
+	unsigned int permissions = parse_mode(argc, argv);
 	int name_option = parse_name(argc, argv);
+	int delete_option = parse_deletion(argc, argv);
+	int print_flag = parse_print(argc, argv);
+
+	char* FileName = NULL;
 	if(name_option != -1)
 		FileName = argv[name_option];
-	unsigned int permissions = parse_mode(argc, argv);
 
 
 	char path[512];
@@ -200,19 +263,28 @@ int main(int argc, char ** argv)
 		// printf("permissions: %o\n", permissions);
 		// printf("file permissions: %o\n\n", get_file_permissions(status));
 
-		if(curr_node->d_type == DT_REG && (type_option == TYPE_FILE || type_option == TYPE_BOTH) && has_permissions(permissions, status)){
+		if(curr_node->d_type == DT_REG && (type_option == TYPE_FILE || type_option == TYPE_ALL) && has_permissions(permissions, status)){
+			
 			if(name_option == -1)
 				printf("F: %s\n", fullPath);
-			else if(strcmp(dirName, FileName) == 0)
+			else if(strcmp(dirName, FileName) == 0) {
 				printf("F: %s\n", fullPath);
+				
+				if (delete_option == DEL_YES)
+					delete(TYPE_FILE, fullPath);
+			}
 		}
 		
-		else if(curr_node->d_type == DT_LNK && (type_option == TYPE_LINK || type_option == TYPE_ALL)) {
+		else if(curr_node->d_type == DT_LNK && type_option == TYPE_LINK) {
 			
 			if(name_option == -1)
 				printf("L: %s\n", fullPath);
-			else if(strcmp(dirName, FileName) == 0)
+			else if(strcmp(dirName, FileName) == 0) {
 				printf("L: %s\n", fullPath);
+
+				if (delete_option == DEL_YES)
+					delete(TYPE_LINK, fullPath);
+			}
 		}
 
 		else if(curr_node->d_type == DT_DIR) {
@@ -222,13 +294,16 @@ int main(int argc, char ** argv)
 				continue;
 
 			//print type dir or both
-			if((type_option == TYPE_DIR || type_option == TYPE_BOTH) && has_permissions(permissions, status)){
+			if((type_option == TYPE_DIR || type_option == TYPE_ALL) && has_permissions(permissions, status)){
 				if(name_option == -1)
 					printf("D: %s\n", fullPath);
-				else if(strcmp(dirName, FileName) == 0)
-					printf("D: %s\n", fullPath);			
+				else if(strcmp(dirName, FileName) == 0) {
+					printf("D: %s\n", fullPath);
+
+					if (delete_option == DEL_YES)
+						delete(TYPE_DIR, fullPath);								
+				}
 			}
-		
 
 
 			//sfind in DIR's
@@ -238,11 +313,8 @@ int main(int argc, char ** argv)
 				//Creating new path
 				execvp(argv[0], get_new_args(fullPath, argc, argv));
 				printf("EXEC FAILED! ABORT!\n");
-			} else {
-				//waitpid(pid, NULL, );
-				//O pai fica a espera, estilo backtrace
+			} else
 				wait(NULL);
-			}
 		}
 	}
 
