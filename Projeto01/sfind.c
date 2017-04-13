@@ -8,7 +8,11 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-//MACROS
+/**
+* MACROS
+**/
+#define BUFFER_SIZE 512
+
 #define TYPE_FILE 	0
 #define TYPE_DIR 	1
 #define TYPE_LINK	2
@@ -20,24 +24,25 @@
 #define PRINT_YES	1
 #define PRINT_NO	0
 
-int isFather = 0;
+int is_parent = 0;
 FILE *fptr;
 
-//FUNCTIONS
-void sigHandler(int signo)
-{
+/**
+* Handle signals
+**/
+void sigHandler(int signo) {
 	switch(signo)
 	{
 		case SIGINT:
 		{
-			if(isFather == 0){
+			if(!is_parent){
 				sleep(10);
 				return;
 			}
 			char c;
 			write(STDOUT_FILENO, "Are you sure you want to terminate (Y/N)?\n", 42);
 			scanf(" %c",&c);
-			getchar(); // To consume the newline
+			getchar();
 
 			if(c=='Y' || c =='y' ){
 				remove("./teste.txt");
@@ -45,7 +50,6 @@ void sigHandler(int signo)
 			}
 
 			return;
-
 		}
 		break;
 	}
@@ -86,6 +90,11 @@ int parse_type(int argc, char ** argv) {
 	return return_value;
 }
 
+
+/**
+* Verify if delete file is required by command
+* @return 0 if not or 1 if yes.
+**/
 int parse_deletion(int argc, char** argv) {
 	if (argc < 3)
 		return DEL_NO;
@@ -100,8 +109,97 @@ int parse_deletion(int argc, char** argv) {
 	return DEL_NO;
 }
 
-void delete(int type, char* filePath) {
 
+/**
+* Verify if print is required by command
+* @return 0 if not or 1 if yes.
+**/
+int parse_print(int argc, char** argv) {
+	if (argc < 3)
+		return PRINT_NO;
+
+	int i = 0;
+	while(i < argc) {
+		if((strcmp(argv[i], "-print") == 0))
+			return PRINT_YES;
+
+		i++;
+	}
+	return PRINT_NO;
+}
+
+
+/**
+* Verify if name is passed by command
+* @return -1 if not or the index in argv of name .
+**/
+int parse_name(int argc, char** argv) {
+	if(argc < 4)
+		return -1;
+
+	int i=0;
+	while(i < argc) {
+
+		if((strcmp(argv[i], "-name") == 0) && (i+1 < argc))
+			return i+1;
+		i++;
+	}
+
+	return -1;
+}
+
+
+/**
+* Verify if exec is passed by command
+* @return -1 if not or the index in argv of exec.
+**/
+int parse_exec(int argc, char** argv) {
+	if (argc < 3)
+		return -1;
+
+	int i=0;
+	while(i < argc) {
+
+		if(strcmp(argv[i], "-exec") == 0) {
+			if ((strcmp(argv[argc-1], ";") == 0 || strcmp(argv[argc-1], "+") == 0) && (i + 3 < argc))
+			return i;
+			else {
+				printf("Error: Missing arguments on exec Call.\n");
+				remove("./teste.txt");
+				exit(1);
+			}
+		}
+
+		i++;
+	}
+
+	return -1;
+}
+
+
+/**
+* Verify if mode is required by command
+* @return 0 if not or the mode in octal base.
+**/
+unsigned int parse_mode(int argc, char** argv) {
+	if(argc < 4)
+		return 0;
+
+	int i=0;
+	while(i < argc) {
+		if((strcmp(argv[i], "-perm") == 0) && (i+1 < argc))
+			return strtol(argv[i+1], NULL, 8);
+		i++;
+	}
+
+	return 0;
+}
+
+
+/**
+* Delete file, dir or link
+**/
+void delete(int type, char* filePath) {
 	//Allocating Space for artificial argv
 	char ** command = malloc((4)*sizeof(char*));
 	for(int i = 0; i < 4; i++)
@@ -125,70 +223,13 @@ void delete(int type, char* filePath) {
 	}
 	if(remove(filePath) == -1)
 		printf("./sfind Error: Failed on Deletion.\n");
-		//execvp("rm", command);
-}
-
-int parse_print(int argc, char** argv) {
-	if (argc < 3)
-		return PRINT_NO;
-
-	int i = 0;
-	while(i < argc) {
-		if((strcmp(argv[i], "-print") == 0))
-			return PRINT_YES;
-
-		i++;
-	}
-	return PRINT_NO;
-}
-
-void print_variables(char** var, int argc)
-{
-	for(int i=0; i<argc; i++)
-		printf("Var: %s\n", var[i]);
 }
 
 
-int parse_name(int argc, char** argv)
-{
-	if(argc < 4)
-		return -1;
-
-	int i=0;
-	while(i < argc) {
-
-		if((strcmp(argv[i], "-name") == 0) && (i+1 < argc))
-			return i+1;
-		i++;
-	}
-
-	return -1;
-}
-
-int parse_exec(int argc, char** argv) {
-	if (argc < 3)
-		return -1;
-
-	int i=0;
-	while(i < argc) {
-
-		if(strcmp(argv[i], "-exec") == 0) {
-			if ((strcmp(argv[argc-1], ";") == 0 || strcmp(argv[argc-1], "+") == 0) && (i + 3 < argc))
-			return i;
-			else {
-				printf("Error: Missing arguments on exec Call.\n");
-				exit(1);
-			}
-		}
-
-		i++;
-	}
-
-	return -1;
-}
-
+/**
+* Execute the "exec" passed by command
+**/
 void exec_command(char * path, int argc, char** argv, int exec_pos) {
-
 	//Allocating Space for artificial argv
 	int v = (argc-exec_pos);
 	char ** command = malloc(v * sizeof(char*));
@@ -218,13 +259,12 @@ void exec_command(char * path, int argc, char** argv, int exec_pos) {
 		wait(NULL);
 }
 
+
 /**
 * Build new command with new directory
 * @return new command
 **/
 char** get_new_args(char* dirName, int argc, char ** argv) {
-	//char *str = malloc(512);
-
 	char ** variables = malloc((argc+1)*sizeof(char*));
 	for(int i=0; i < argc+1; i++)
 		variables[i] = malloc(1024*sizeof(char*));
@@ -236,30 +276,25 @@ char** get_new_args(char* dirName, int argc, char ** argv) {
 		strcpy(variables[i], argv[i]);
 	}
 	variables[argc] = NULL;
-	//printVaraibles( variables, argc);
+
 	return variables;
 }
 
 
-
-unsigned int parse_mode(int argc, char** argv) {
-	if(argc<4)
-		return 0;
-
-	int i=0;
-	while(i < argc) {
-		if((strcmp(argv[i], "-perm") == 0) && (i+1 < argc))
-			return strtol(argv[i+1], NULL, 8);
-		i++;
-	}
-
-	return 0;
-}
-
+/**
+* Verify the permissions of current file/dir/link
+* @return the permissions
+**/
 int get_file_permissions(struct stat status) {
 	return status.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 }
 
+
+/**
+* Checks if the permissions of the current file/dir/link are the same 
+* as those passed by the command
+* @return 1 if true or 0 if false
+**/
 int has_permissions(unsigned int permissions, struct stat status) {
 	if(permissions == 0 || permissions == get_file_permissions(status))
 		return 1;
@@ -267,8 +302,8 @@ int has_permissions(unsigned int permissions, struct stat status) {
 }
 
 
-int main(int argc, char ** argv)
-{
+
+int main(int argc, char ** argv) {
 	struct sigaction action;
 	action.sa_handler = &sigHandler;
 	sigemptyset(&action.sa_mask);
@@ -276,7 +311,7 @@ int main(int argc, char ** argv)
 
 	if((fptr = fopen("./teste.txt", "rb+")) == NULL)
 	{
-		isFather = 1;
+		is_parent = 1;
 		fptr = fopen("./teste.txt", "wb");
 	}
 	fclose(fptr);
@@ -285,11 +320,13 @@ int main(int argc, char ** argv)
 	if (sigaction(SIGINT,&action,NULL) < 0)
 	{
 		fprintf(stderr,"Unable to install SIGINT handler\n");
+		remove("./teste.txt");
 		exit(1);
 	}
 
 	if (argc < 2) {
 		printf("This program requires at least 1 argument (directory), example ./sfind / \n");
+		remove("./teste.txt");
 		exit(1);
 	}
 
@@ -304,8 +341,7 @@ int main(int argc, char ** argv)
 	if(name_option != -1)
 		FileName = argv[name_option];
 
-
-	char path[512];
+	char path[BUFFER_SIZE];
 	strcpy(path, argv[1]);
 	DIR *directory;
 	directory = opendir(argv[1]);
@@ -313,41 +349,33 @@ int main(int argc, char ** argv)
 	struct stat status;
 	struct dirent *curr_node;
 
-	if (directory == NULL) {
+	if (directory == NULL)
 		printf("Error: Failed to Open Directory.\nDirectory was: %s.\n", path);
-		exit(EXIT_FAILURE);
-	}
 
 	while((curr_node = readdir(directory)) != NULL )
 	{
 		char *dirName = (curr_node)->d_name;
-		char fullPath[sizeof(argv[1])+sizeof(dirName)+1];
-		strcpy(fullPath, argv[1]);
-		strcat(fullPath, "/");
-		strcat(fullPath, dirName);
+		char full_path[sizeof(argv[1])+sizeof(dirName)+1];
+		strcpy(full_path, argv[1]);
+		strcat(full_path, "/");
+		strcat(full_path, dirName);
 
-		stat(fullPath, &status);
+		stat(full_path, &status);
 
-		// printf("dirname: %s\n", dirName);
-		// printf("atatus_mode: %o\n", status.st_mode);
-		// printf("permissions: %o\n", permissions);
-		// printf("file permissions: %o\n\n", get_file_permissions(status));
-
-		if(curr_node->d_type == DT_REG && (type_option == TYPE_FILE || type_option == TYPE_ALL) && has_permissions(permissions, status)){
+		if(curr_node->d_type == DT_REG && (type_option == TYPE_FILE || type_option == TYPE_ALL) && has_permissions(permissions, status)) {
 
 			if((name_option == -1) || (strcmp(dirName, FileName) == 0)) {
 
-				if (delete_option == DEL_YES)
-				{
-						if(print_option == PRINT_YES)
-							printf("F: %s\n", fullPath);
-							delete(TYPE_FILE, fullPath);
+				if (delete_option == DEL_YES) {
+					if(print_option == PRINT_YES)
+						printf("%s\n", full_path);
+					delete(TYPE_FILE, full_path);
 				}
 				else
-						printf("F: %s\n", fullPath);
+					printf("%s\n", full_path);
 
 				if (exec_option >= 0)
-					exec_command(fullPath, argc, argv, exec_option);
+					exec_command(full_path, argc, argv, exec_option);
 			}
 		}
 
@@ -355,17 +383,16 @@ int main(int argc, char ** argv)
 
 			if((name_option == -1) || (strcmp(dirName, FileName) == 0)) {
 
-				if (delete_option == DEL_YES)
-				{
-						if(print_option == PRINT_YES)
-							printf("L: %s\n", fullPath);
-							delete(TYPE_LINK, fullPath);
+				if (delete_option == DEL_YES) {
+					if(print_option == PRINT_YES)
+						printf("%s\n", full_path);
+					delete(TYPE_LINK, full_path);
 				}
 				else
-						printf("L: %s\n", fullPath);
+					printf("%s\n", full_path);
 
 				if (exec_option >= 0)
-					exec_command(fullPath, argc, argv, exec_option);
+					exec_command(full_path, argc, argv, exec_option);
 			}
 		}
 
@@ -380,34 +407,33 @@ int main(int argc, char ** argv)
 
 				if((name_option == -1) || (strcmp(dirName, FileName) == 0)) {
 
-					if (delete_option == DEL_YES)
-					{
-							if(print_option == PRINT_YES)
-								printf("D: %s\n", fullPath);
-								delete(TYPE_DIR, fullPath);
+					if (delete_option == DEL_YES) {
+						if(print_option == PRINT_YES)
+							printf("%s\n", full_path);
+						delete(TYPE_DIR, full_path);
 					}
 					else
-							printf("D: %s\n", fullPath);
+						printf("%s\n", full_path);
 
 					if (exec_option >= 0)
-						exec_command(fullPath, argc, argv, exec_option);
+						exec_command(full_path, argc, argv, exec_option);
 				}
 			}
-
 
 			//sfind in DIR's
 			int pid = fork();
 			if (pid == 0) {
 
 				//Creating new path
-				execvp(argv[0], get_new_args(fullPath, argc, argv));
+				execvp(argv[0], get_new_args(full_path, argc, argv));
 				printf("EXEC FAILED! ABORT!\n");
 			} else
 			wait(NULL);
 		}
 	}
-	if(isFather == 1)
-			remove("./teste.txt");
+
+	if(is_parent)
+		remove("./teste.txt");
 
 	return 0;
 }
