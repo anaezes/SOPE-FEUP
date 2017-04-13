@@ -169,7 +169,7 @@ int parse_exec(int argc, char** argv) {
 	while(i < argc) {
 
 		if(strcmp(argv[i], "-exec") == 0) {
-			if ((strcmp(argv[argc-1], "\;") == 0 || strcmp(argv[argc-1], "+") == 0) && (i + 3 < argc))
+			if ((strcmp(argv[argc-1], ";") == 0 || strcmp(argv[argc-1], "+") == 0) && (i + 3 < argc))
 				return i;
 			else {
 				printf("Error: Missing arguments on exec Call.\n");
