@@ -10,5 +10,6 @@
 	-type
 	-name
 	-print
+	-perm
 	-delete
 	-exec
