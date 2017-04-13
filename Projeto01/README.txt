@@ -10,5 +10,5 @@
 	-type
 	-name
 	-print
-	-detete
+	-delete
 	-exec
