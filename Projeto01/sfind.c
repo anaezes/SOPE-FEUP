@@ -83,6 +83,8 @@ int parse_type(int argc, char ** argv) {
 }
 
 int parse_deletion(int argc, char** argv) {
+	if (argc < 3)
+		return DEL_NO;
 
 	int i = 0;
 	while(i < argc) {
@@ -123,6 +125,8 @@ void delete(int type, char* filePath) {
 }
 
 int parse_print(int argc, char** argv) {
+	if (argc < 3)
+		return PRINT_NO;
 
 	int i = 0;
 	while(i < argc) {
@@ -143,7 +147,7 @@ void print_variables(char** var, int argc)
 
 int parse_name(int argc, char** argv)
 {
-	if(argc<4)
+	if(argc < 4)
 		return -1;
 
 	int i=0;
@@ -155,6 +159,59 @@ int parse_name(int argc, char** argv)
 	}
 
 	return -1;
+}
+
+int parse_exec(int argc, char** argv) {
+	if (argc < 3)
+		return -1;
+
+	int i=0;
+	while(i < argc) {
+
+		if(strcmp(argv[i], "-exec") == 0) {
+			if ((strcmp(argv[argc-1], "\;") == 0 || strcmp(argv[argc-1], "+") == 0) && (i + 3 < argc))
+				return i;
+			else {
+				printf("Error: Missing arguments on exec Call.\n");
+				exit(1);
+			}
+		}
+
+		i++;
+	}
+
+	return -1;
+}
+
+void exec_command(char * path, int argc, char** argv, int exec_pos) {
+	
+	//Allocating Space for artificial argv
+	int v = (argc-exec_pos);
+	char ** command = malloc(v * sizeof(char*));
+	for(int i = 0; i < v; i++)
+		command[i] = malloc(1024*sizeof(char*));
+
+	//Creating artificial argv
+	int i = 0;
+	v = exec_pos+1;
+	while (v < argc) {
+
+		if (strcmp(argv[v], "{}") == 0)
+			strcpy(command[i], path);
+		else
+			strcpy(command[i], argv[v]);
+		
+		++v; ++i;
+	}
+	command[i-1] = NULL;
+
+	int pid = fork();
+	if (pid == 0) {
+		execvp(command[0], command);
+		printf("./sfind Error: Failed on -exec command.\n");
+	} 
+	else
+		wait(NULL);
 }
 
 /**
@@ -228,7 +285,8 @@ int main(int argc, char ** argv)
 	unsigned int permissions = parse_mode(argc, argv);
 	int name_option = parse_name(argc, argv);
 	int delete_option = parse_deletion(argc, argv);
-	int print_flag = parse_print(argc, argv);
+	int print_option = parse_print(argc, argv);
+	int exec_option = parse_exec(argc, argv);
 
 	char* FileName = NULL;
 	if(name_option != -1)
@@ -272,6 +330,9 @@ int main(int argc, char ** argv)
 				
 				if (delete_option == DEL_YES)
 					delete(TYPE_FILE, fullPath);
+
+				if (exec_option >= 0)
+					exec_command(fullPath, argc, argv, exec_option);
 			}
 		}
 		
@@ -284,6 +345,9 @@ int main(int argc, char ** argv)
 
 				if (delete_option == DEL_YES)
 					delete(TYPE_LINK, fullPath);
+
+				if (exec_option >= 0)
+					exec_command(fullPath, argc, argv, exec_option);
 			}
 		}
 
@@ -301,7 +365,10 @@ int main(int argc, char ** argv)
 					printf("D: %s\n", fullPath);
 
 					if (delete_option == DEL_YES)
-						delete(TYPE_DIR, fullPath);								
+						delete(TYPE_DIR, fullPath);	
+
+					if (exec_option >= 0)
+						exec_command(fullPath, argc, argv, exec_option);													
 				}
 			}
 
