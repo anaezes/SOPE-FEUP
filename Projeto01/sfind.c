@@ -323,11 +323,10 @@ int main(int argc, char ** argv)
 
 		if(curr_node->d_type == DT_REG && (type_option == TYPE_FILE || type_option == TYPE_ALL) && has_permissions(permissions, status)){
 			
-			if(name_option == -1)
-				printf("F: %s\n", fullPath);
-			else if(strcmp(dirName, FileName) == 0) {
-				printf("F: %s\n", fullPath);
+			if((name_option == -1) || (strcmp(dirName, FileName) == 0)) {
 				
+				printf("F: %s\n", fullPath);
+
 				if (delete_option == DEL_YES)
 					delete(TYPE_FILE, fullPath);
 
@@ -336,11 +335,10 @@ int main(int argc, char ** argv)
 			}
 		}
 		
-		else if(curr_node->d_type == DT_LNK && type_option == TYPE_LINK) {
+		else if(curr_node->d_type == DT_LNK && (type_option == TYPE_LINK || type_option == TYPE_ALL)) {
 			
-			if(name_option == -1)
-				printf("L: %s\n", fullPath);
-			else if(strcmp(dirName, FileName) == 0) {
+			if((name_option == -1) || (strcmp(dirName, FileName) == 0)) {
+
 				printf("L: %s\n", fullPath);
 
 				if (delete_option == DEL_YES)
@@ -358,10 +356,10 @@ int main(int argc, char ** argv)
 				continue;
 
 			//print type dir or both
-			if((type_option == TYPE_DIR || type_option == TYPE_ALL) && has_permissions(permissions, status)){
-				if(name_option == -1)
-					printf("D: %s\n", fullPath);
-				else if(strcmp(dirName, FileName) == 0) {
+			if((type_option == TYPE_DIR || type_option == TYPE_ALL) && has_permissions(permissions, status)) {
+				
+				if((name_option == -1) || (strcmp(dirName, FileName) == 0)) {
+
 					printf("D: %s\n", fullPath);
 
 					if (delete_option == DEL_YES)
