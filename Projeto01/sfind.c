@@ -20,6 +20,9 @@
 #define PRINT_YES	1
 #define PRINT_NO	0
 
+int isFather = 0;
+FILE *fptr;
+
 //FUNCTIONS
 void sigHandler(int signo)
 {
@@ -27,13 +30,19 @@ void sigHandler(int signo)
 	{
 		case SIGINT:
 		{
+			if(isFather == 0){
+				sleep(10);
+				return;
+			}
 			char c;
 			write(STDOUT_FILENO, "Are you sure you want to terminate (Y/N)?\n", 42);
 			scanf(" %c",&c);
-			getchar(); // To consume the newline 
+			getchar(); // To consume the newline
 
-			if(c=='Y' || c =='y' )
+			if(c=='Y' || c =='y' ){
+				remove("./teste.txt");
 				kill(0, SIGKILL);
+			}
 
 			return;
 
@@ -64,10 +73,10 @@ int parse_type(int argc, char ** argv) {
 
 			if(strcmp(argv[i+1], "f") == 0)
 				return_value = TYPE_FILE;
-			
+
 			else if(strcmp(argv[i+1], "d") == 0)
 				return_value = TYPE_DIR;
-			
+
 			else if(strcmp(argv[i+1], "l") == 0)
 				return_value = TYPE_LINK;
 		}
@@ -85,7 +94,7 @@ int parse_deletion(int argc, char** argv) {
 	while(i < argc) {
 		if((strcmp(argv[i], "-delete") == 0))
 			return DEL_YES;
-		
+
 		i++;
 	}
 	return DEL_NO;
@@ -114,9 +123,9 @@ void delete(int type, char* filePath) {
 		command[3] = NULL;
 		break;
 	}
-	
-	execvp("rm", command);
-	printf("./sfind Error: Failed on Deletion.\n");
+	if(remove(filePath) == -1)
+		printf("./sfind Error: Failed on Deletion.\n");
+		//execvp("rm", command);
 }
 
 int parse_print(int argc, char** argv) {
@@ -127,7 +136,7 @@ int parse_print(int argc, char** argv) {
 	while(i < argc) {
 		if((strcmp(argv[i], "-print") == 0))
 			return PRINT_YES;
-		
+
 		i++;
 	}
 	return PRINT_NO;
@@ -179,7 +188,7 @@ int parse_exec(int argc, char** argv) {
 }
 
 void exec_command(char * path, int argc, char** argv, int exec_pos) {
-	
+
 	//Allocating Space for artificial argv
 	int v = (argc-exec_pos);
 	char ** command = malloc(v * sizeof(char*));
@@ -195,7 +204,7 @@ void exec_command(char * path, int argc, char** argv, int exec_pos) {
 			strcpy(command[i], path);
 		else
 			strcpy(command[i], argv[v]);
-		
+
 		++v; ++i;
 	}
 	command[i-1] = NULL;
@@ -204,7 +213,7 @@ void exec_command(char * path, int argc, char** argv, int exec_pos) {
 	if (pid == 0) {
 		execvp(command[0], command);
 		printf("./sfind Error: Failed on -exec command.\n");
-	} 
+	}
 	else
 		wait(NULL);
 }
@@ -265,6 +274,14 @@ int main(int argc, char ** argv)
 	sigemptyset(&action.sa_mask);
 	action.sa_flags = 0;
 
+	if((fptr = fopen("./teste.txt", "rb+")) == NULL)
+	{
+		isFather = 1;
+		fptr = fopen("./teste.txt", "wb");
+	}
+	fclose(fptr);
+
+
 	if (sigaction(SIGINT,&action,NULL) < 0)
 	{
 		fprintf(stderr,"Unable to install SIGINT handler\n");
@@ -317,27 +334,35 @@ int main(int argc, char ** argv)
 		// printf("file permissions: %o\n\n", get_file_permissions(status));
 
 		if(curr_node->d_type == DT_REG && (type_option == TYPE_FILE || type_option == TYPE_ALL) && has_permissions(permissions, status)){
-			
+
 			if((name_option == -1) || (strcmp(dirName, FileName) == 0)) {
-				
-				printf("F: %s\n", fullPath);
 
 				if (delete_option == DEL_YES)
-					delete(TYPE_FILE, fullPath);
+				{
+						if(print_option == PRINT_YES)
+							printf("F: %s\n", fullPath);
+							delete(TYPE_FILE, fullPath);
+				}
+				else
+						printf("F: %s\n", fullPath);
 
 				if (exec_option >= 0)
 					exec_command(fullPath, argc, argv, exec_option);
 			}
 		}
-		
+
 		else if(curr_node->d_type == DT_LNK && (type_option == TYPE_LINK || type_option == TYPE_ALL)) {
-			
+
 			if((name_option == -1) || (strcmp(dirName, FileName) == 0)) {
 
-				printf("L: %s\n", fullPath);
-
 				if (delete_option == DEL_YES)
-					delete(TYPE_LINK, fullPath);
+				{
+						if(print_option == PRINT_YES)
+							printf("L: %s\n", fullPath);
+							delete(TYPE_LINK, fullPath);
+				}
+				else
+						printf("L: %s\n", fullPath);
 
 				if (exec_option >= 0)
 					exec_command(fullPath, argc, argv, exec_option);
@@ -352,16 +377,20 @@ int main(int argc, char ** argv)
 
 			//print type dir or both
 			if((type_option == TYPE_DIR || type_option == TYPE_ALL) && has_permissions(permissions, status)) {
-				
+
 				if((name_option == -1) || (strcmp(dirName, FileName) == 0)) {
 
-					printf("D: %s\n", fullPath);
-
 					if (delete_option == DEL_YES)
-						delete(TYPE_DIR, fullPath);	
+					{
+							if(print_option == PRINT_YES)
+								printf("D: %s\n", fullPath);
+								delete(TYPE_DIR, fullPath);
+					}
+					else
+							printf("D: %s\n", fullPath);
 
 					if (exec_option >= 0)
-						exec_command(fullPath, argc, argv, exec_option);													
+						exec_command(fullPath, argc, argv, exec_option);
 				}
 			}
 
@@ -377,6 +406,8 @@ int main(int argc, char ** argv)
 			wait(NULL);
 		}
 	}
+	if(isFather == 1)
+			remove("./teste.txt");
 
 	return 0;
 }
