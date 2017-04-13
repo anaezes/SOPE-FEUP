@@ -27,23 +27,18 @@ void sigHandler(int signo)
 	{
 		case SIGINT:
 		{
-			char terminate[3];
-			while (1) {
-				write(STDOUT_FILENO, "Are you sure you want to terminate (Y/N)?", 42);
-				read(STDIN_FILENO, &terminate,3);
+			char c;
+			write(STDOUT_FILENO, "Are you sure you want to terminate (Y/N)?\n", 42);
+			scanf(" %c",&c);
+			getchar(); // To consume the newline 
 
-            	// If answer Y -> finish. Otherwise, re-ask, unless answer is N.
-				if( terminate[1] == '\n' ) {
-					if( terminate[0]=='Y' || terminate[0]=='y' )
-                    exit(EXIT_FAILURE); //alterei porque estava a originar imensos zoombies
-                else if (terminate[0]=='N' || terminate[0]=='n')
-                	return;
-            	}
-            else
-            	write(STDOUT_FILENO, "Answer not accepted\n", 21);
-        	}
-        break;
-    	}
+			if(c=='Y' || c =='y' )
+				kill(0, SIGKILL);
+
+			return;
+
+		}
+		break;
 	}
 }
 
@@ -111,13 +106,13 @@ void delete(int type, char* filePath) {
 	switch(type) {
 		case TYPE_FILE:
 		case TYPE_LINK:
-			command[2] = NULL;
-			break;
+		command[2] = NULL;
+		break;
 
 		case TYPE_DIR:
-			strcpy(command[2], "-d");
-			command[3] = NULL;
-			break;
+		strcpy(command[2], "-d");
+		command[3] = NULL;
+		break;
 	}
 	
 	execvp("rm", command);
@@ -170,7 +165,7 @@ int parse_exec(int argc, char** argv) {
 
 		if(strcmp(argv[i], "-exec") == 0) {
 			if ((strcmp(argv[argc-1], ";") == 0 || strcmp(argv[argc-1], "+") == 0) && (i + 3 < argc))
-				return i;
+			return i;
 			else {
 				printf("Error: Missing arguments on exec Call.\n");
 				exit(1);
@@ -308,14 +303,14 @@ int main(int argc, char ** argv)
 
 	while((curr_node = readdir(directory)) != NULL )
 	{
-        char *dirName = (curr_node)->d_name;
-        char fullPath[sizeof(argv[1])+sizeof(dirName)+1];
-        strcpy(fullPath, argv[1]);
-        strcat(fullPath, "/");
-        strcat(fullPath, dirName);
- 
-        stat(fullPath, &status);
-	
+		char *dirName = (curr_node)->d_name;
+		char fullPath[sizeof(argv[1])+sizeof(dirName)+1];
+		strcpy(fullPath, argv[1]);
+		strcat(fullPath, "/");
+		strcat(fullPath, dirName);
+
+		stat(fullPath, &status);
+
 		// printf("dirname: %s\n", dirName);
 		// printf("atatus_mode: %o\n", status.st_mode);
 		// printf("permissions: %o\n", permissions);
@@ -379,7 +374,7 @@ int main(int argc, char ** argv)
 				execvp(argv[0], get_new_args(fullPath, argc, argv));
 				printf("EXEC FAILED! ABORT!\n");
 			} else
-				wait(NULL);
+			wait(NULL);
 		}
 	}
 
