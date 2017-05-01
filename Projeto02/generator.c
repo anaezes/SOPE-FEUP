@@ -3,12 +3,20 @@
 #include <string.h>
 #include <pthread.h>
 
+/**
+ * Struct containing the args the program runs with.
+ */
 typedef struct arg_struct {
-    int nmbOfOrders;
-    int maximumTime;
-}args;
+    int numOrders;		/**< Number of Orders that shall be generated */
+    int maximumTime;	/**< Maximum Duration time that an order can have, in miliSeconds. */
+} args;
 
 
+/**
+ * Function responsible for generating random Threads, according to the given argument.
+ *
+ * @param arguments. Struct containing the number of Orders that shall be generated, and their maximum duration.
+ */
 void *generator(void * arguments){
 	
 	//ge
@@ -18,11 +26,9 @@ void *generator(void * arguments){
 	//rand
 	time_t t;
 	//install rand seed
-	
 	srand((unsigned) time(&t));
 
-	for(int i=0; i<new_args->nmbOfOrders; i++){
-
+	for(int i=0; i<new_args->numOrders; i++) {
 
 		printf("It: %d  , time: %d   ,   gender: %c\n", i, rand()%new_args->maximumTime, genders[rand()%2]);
 
@@ -39,9 +45,9 @@ int main(int argc, char** argv){
 	pthread_t generatorTID;
 	int pthread_res;
 
-	//create an agrs struct to save values to be used in thread creation
+	//create an args struct to save values to be used in thread creation
 	args* generator_args = (args*) malloc(sizeof(args));
-	generator_args->nmbOfOrders = atoi(argv[1]);
+	generator_args->numOrders = atoi(argv[1]);
 	generator_args->maximumTime = atoi(argv[2]);
 
 	//create thread
