@@ -20,17 +20,17 @@ typedef struct arg_struct {
 void *generator(void * arguments){
 	
 	//ge
-	args* new_args = (args*) arguments;
-	char genders[] = {'M', 'W'};
+	args* user_args = (args*) arguments;
+	char genders[] = {'M', 'F'};	
 	
 	//rand
 	time_t t;
 	//install rand seed
 	srand((unsigned) time(&t));
 
-	for(int i=0; i<new_args->numOrders; i++) {
+	for(int i=0; i < user_args->numOrders; ++i) {
 
-		printf("It: %d  , time: %d   ,   gender: %c\n", i, rand()%new_args->maximumTime, genders[rand()%2]);
+		printf("It: %d  , time: %d   ,   gender: %c\n", i, rand()%user_args->maximumTime, genders[rand()%2]);
 
 	}
 
@@ -51,9 +51,9 @@ int main(int argc, char** argv){
 	generator_args->maximumTime = atoi(argv[2]);
 
 	//create thread
-	if((pthread_res = pthread_create(&generatorTID, NULL, &generator, (void *)generator_args)) != 0){
+	if((pthread_res = pthread_create(&generatorTID, NULL, &generator, (void *)generator_args)) != 0) {
 		printf("Error creating generator's thread: %s", strerror(pthread_res));
-
 	}
+
 	return pthread_join(generatorTID, NULL); /* Wait until thread is finished */
 }
