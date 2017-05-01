@@ -1,7 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <pthread.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+/* MACROS */
+#define ENTRY 0
+#define EXIT 1
+
+#define TRUE 0
+#define FALSE -1
 
 /**
  * Struct containing the args the program runs with.
@@ -11,6 +22,59 @@ typedef struct arg_struct {
     int maximumTime;	/**< Maximum Duration time that an order can have, in miliSeconds. */
 } args;
 
+//struct semelhante a do gerador.c para conseguir entrepetar os pedidos
+//PRIMEIRO TESTAR COM UMA MENSAGEM
+
+
+/**
+ * Function used to create and set the FIFO's, by directing them accordingly.
+
+ * @return TRUE if no errors or problems happened, FALSE otherwise.
+ */
+int confFifos () {
+
+	// Initializing FileDescriptors and Fifo's Name
+	int fd[2];
+	const char* entryFifo = "/tmp/rejeitados";
+	const char* exitFifo = "/tmp/entrada";
+
+	//unlink(exitFifo);
+
+	//Creating the FIFO
+	if (mkfifo(exitFifo, 0660) == FALSE) { //TODO: Verify mode. As macro??
+		if (errno == EEXIST)
+			printf("FIFO '%s' already exits.\n", exitFifo);
+		else
+			printf("Can't create FIFO '%s'.\n", exitFifo);
+	
+	} else
+		printf("FIFO '%s'successfuly created.\n", exitFifo);
+	
+	//Mecanismo de sincronização aqui, para garantir que os programas podem ser começados por qlq um dos files: generator.c or sauna.c, No Order required
+
+	//Setting the Fifo's 'Flow'
+	if ((fd[ENTRY] = open(entryFifo, O_RDONLY)) == FALSE) {
+		printf("Error opening FIFO '%s' for read purposes.\n", entryFifo);
+		return FALSE;
+	
+	} else if ((fd[EXIT] = open(exitFifo, O_WRONLY)) == FALSE) {
+		printf("Error opening FIFO: '%s' for write purposes.\n", exitFifo);
+		return FALSE;
+	}
+
+	//Fifo's are now ready for use
+	return TRUE;
+}
+
+/**
+ * Function used to destroy the FIFO's that were created during the usage of this program.
+ *
+ * @return TRUE if no errors or problems happened, FALSE otherwise.
+ */
+int destroyFifos () {
+
+	return TRUE;
+}
 
 /**
  * Function responsible for generating random Threads, according to the given argument.
@@ -19,29 +83,29 @@ typedef struct arg_struct {
  */
 void *generator(void * arguments){
 	
-	//ge
 	args* user_args = (args*) arguments;
 	char genders[] = {'M', 'F'};	
 	
-	//rand
+	//install random seed, based on time
 	time_t t;
-	//install rand seed
 	srand((unsigned) time(&t));
 
-	for(int i=0; i < user_args->numOrders; ++i) {
-
+	for(int i=0; i < user_args->numOrders; ++i)
 		printf("It: %d  , time: %d   ,   gender: %c\n", i, rand()%user_args->maximumTime, genders[rand()%2]);
-
-	}
 
     pthread_exit(NULL);
     return NULL;
-
 }
 
 
-int main(int argc, char** argv){
-	
+int main(int argc, char** argv) {
+
+	confFifos();
+
+
+
+	//LUIS WORKING CODE-> USE FOR THREADS
+	/*
 	pthread_t generatorTID;
 	int pthread_res;
 
@@ -51,9 +115,10 @@ int main(int argc, char** argv){
 	generator_args->maximumTime = atoi(argv[2]);
 
 	//create thread
-	if((pthread_res = pthread_create(&generatorTID, NULL, &generator, (void *)generator_args)) != 0) {
+	if((pthread_res = pthread_create(&generatorTID, NULL, &generator, (void *)generator_args)) != TRUE) {
 		printf("Error creating generator's thread: %s", strerror(pthread_res));
 	}
 
 	return pthread_join(generatorTID, NULL); /* Wait until thread is finished */
+	return 0;
 }
