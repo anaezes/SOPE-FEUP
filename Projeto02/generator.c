@@ -38,7 +38,7 @@ int confFifos () {
 	const char* entryFifo = "/tmp/rejeitados";
 	const char* exitFifo = "/tmp/entrada";
 
-	//unlink(exitFifo);
+	unlink(exitFifo);
 
 	//Creating the FIFO
 	if (mkfifo(exitFifo, 0660) == FALSE) { //TODO: Verify mode. As macro??
@@ -53,15 +53,17 @@ int confFifos () {
 	//Mecanismo de sincronização aqui, para garantir que os programas podem ser começados por qlq um dos files: generator.c or sauna.c, No Order required
 
 	//Setting the Fifo's 'Flow'
-	if ((fd[ENTRY] = open(entryFifo, O_RDONLY)) == FALSE) {
-		printf("Error opening FIFO '%s' for read purposes.\n", entryFifo);
+	printf("Waiting for sauna.c to begin.\n");
+
+	if ((fd[EXIT] = open(exitFifo, O_WRONLY)) == FALSE) {
+		printf("Error opening FIFO '%s' for write purposes.\n", exitFifo);
 		return FALSE;
 	
-	} else if ((fd[EXIT] = open(exitFifo, O_WRONLY)) == FALSE) {
-		printf("Error opening FIFO: '%s' for write purposes.\n", exitFifo);
+	} else if ((fd[ENTRY] = open(entryFifo, O_RDONLY)) == FALSE) {
+		printf("Error opening FIFO '%s' for read purposes.\n", entryFifo);
 		return FALSE;
 	}
-
+	
 	//Fifo's are now ready for use
 	return TRUE;
 }
@@ -100,7 +102,11 @@ void *generator(void * arguments){
 
 int main(int argc, char** argv) {
 
-	confFifos();
+	if (confFifos() == FALSE) {
+		printf("Error on function confFifos().\n");
+		return FALSE;
+	} else
+		printf("Successfuly established connection to sauna.c.\n");
 
 
 

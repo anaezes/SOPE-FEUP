@@ -30,7 +30,7 @@ int confFifos () {
 	const char* exitFifo = "/tmp/rejeitados";
 	const char* entryFifo = "/tmp/entrada";
 
-	//unlink(exitFifo);
+	unlink(exitFifo);
 
 	//Creating the FIFO
 	if (mkfifo(exitFifo, 0660) == FALSE) { //TODO: Verify mode. As macro??
@@ -45,6 +45,8 @@ int confFifos () {
 	//Mecanismo de sincronização aqui, para garantir que os programas podem ser começados por qlq um dos files: generator.c or sauna.c, No Order required
 
 	//Setting the Fifo's 'Flow'
+	printf("Waiting for generator.c to begin.\n");
+
 	if ((fd[ENTRY] = open(entryFifo, O_RDONLY)) == FALSE) {
 		printf("Error opening FIFO '%s' for read purposes.\n", entryFifo);
 		return FALSE;
@@ -79,7 +81,11 @@ int destroyFifos () {
 //Função main que faz recepção e processamento e no final cama função de estatisytica
 int main (int argc, char** argv) {
 
-	confFifos();
+	if (confFifos() == FALSE) {
+		printf("Error on function confFifos().\n");
+		return FALSE;
+	} else
+		printf("Successfuly established connection to generator.c.\n");
 	
 	//TODO: não esquecer de instalar handlers para o control C. ? Para não ficar eternamente a espera que o outro processo comece.
 	//Qd um terminar deve avisar o companheiro que ele terminou para este terminar tb. Mt trabalho? Ou cenas extras sem necessidade de avaliação?
