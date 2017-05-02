@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <pthread.h>
@@ -14,7 +15,16 @@
 #define TRUE 0
 #define FALSE -1
 
-//struct semelhante a do gerador.c para conseguir entrepetar os pedidos
+/**
+ * Struct containing the information about an Order.
+ */
+typedef struct arg_struct {
+    int oid;			/**< Order ID. */
+    char gender;		/**< Gender of the person who made the Order. */
+    int time;			/**< Time the Order's owner wants to stay in the sauna. */
+    int numRejected;	/**< Number of times the Order was rejected. */
+} order;
+
 //PRIMEIRO TESTAR COM UMA MENSAGEM
 
 
@@ -30,7 +40,7 @@ int confFifos () {
 	const char* exitFifo = "/tmp/rejeitados";
 	const char* entryFifo = "/tmp/entrada";
 
-	unlink(exitFifo);
+	unlink(exitFifo);// TODO: ASK PROFESSOR THE GIT DOUBT
 
 	//Creating the FIFO
 	if (mkfifo(exitFifo, 0660) == FALSE) { //TODO: Verify mode. As macro??
@@ -80,15 +90,27 @@ int destroyFifos () {
 
 //Função main que faz recepção e processamento e no final cama função de estatisytica
 int main (int argc, char** argv) {
+	
+	//Number of arguments verification
+	if (argc != 2) {
+		printf("Usage: ./sauna <number of places in the sauna>\n");
+		exit(1);
+	}
 
+	//Interpreting the given arguments
+	int saunaSpaces = atoi(argv[2]);
+
+	//Initializing the Connection between the programs
 	if (confFifos() == FALSE) {
 		printf("Error on function confFifos().\n");
 		return FALSE;
 	} else
-		printf("Successfuly established connection to generator.c.\n");
+		printf("Successfuly established connection to generator.c.\n\n");
 	
 	//TODO: não esquecer de instalar handlers para o control C. ? Para não ficar eternamente a espera que o outro processo comece.
 	//Qd um terminar deve avisar o companheiro que ele terminou para este terminar tb. Mt trabalho? Ou cenas extras sem necessidade de avaliação?
+
+	//atexit handller que chama a destroyFifos?? Parece-me bem e lógico, perguntar ao prof na sexta tb
 
 	exit(0);
 }

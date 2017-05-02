@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <pthread.h>
@@ -38,7 +39,7 @@ int confFifos () {
 	const char* entryFifo = "/tmp/rejeitados";
 	const char* exitFifo = "/tmp/entrada";
 
-	unlink(exitFifo);
+	unlink(exitFifo);// TODO: ASK PROFESSOR THE GIT DOUBT
 
 	//Creating the FIFO
 	if (mkfifo(exitFifo, 0660) == FALSE) { //TODO: Verify mode. As macro??
@@ -102,16 +103,21 @@ void *generator(void * arguments){
 
 int main(int argc, char** argv) {
 
+	//Number of arguments verification
+	if (argc != 3) {
+		printf("Usage: ./generator <number of Orders> <máx Time for each Order>\n");
+		exit(1);
+	}
+
+	//Initializing the Connection between the programs
 	if (confFifos() == FALSE) {
 		printf("Error on function confFifos().\n");
-		return FALSE;
+		exit(2);
 	} else
-		printf("Successfuly established connection to sauna.c.\n");
+		printf("Successfuly established connection to sauna.c.\n\n");
 
 
-
-	//LUIS WORKING CODE-> USE FOR THREADS
-	/*
+	/* // LUIS WORKING CODE FOR THREADS
 	pthread_t generatorTID;
 	int pthread_res;
 
