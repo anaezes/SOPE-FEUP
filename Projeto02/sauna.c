@@ -7,52 +7,36 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
-/* MACROS */
-#define EXIT 0
-#define ENTRY 1
-
-#define TRUE 0
-#define FALSE -1
-
-/**
- * Struct containing the information about an Request.
- */
-typedef struct request_struct {
-    int rid;			/**< Request ID. */
-    char gender;		/**< Gender of the person who made the Request. */
-    int time;			/**< Time the Request's owner wants to stay in the sauna. */
-    int numRejected;	/**< Number of times the Request was rejected. */
-} request;
+#include "sauna.h"
 
 //PRIMEIRO TESTAR COM UMA MENSAGEM
 
 
 /**
  * Function used to create and set the FIFO's, by directing them accordingly.
-
+ *
  * @return TRUE if no errors or problems happened, FALSE otherwise.
  */
 int confFifos () {
 
 	// Initializing FileDescriptors and Fifo's Name
 	int fd[2];
-	const char* exitFifo = "/tmp/rejeitados";
-	const char* entryFifo = "/tmp/entrada";
+	const char* exitFifo = FIFO_REJEITADOS;
+	const char* entryFifo = FIFO_ENTRADA;
 
-	unlink(exitFifo);// TODO: ASK PROFESSOR THE GIT DOUBT
+	//	unlink(exitFifo);// TODO: ASK PROFESSOR THE GIT DOUBT
 
 	//Creating the FIFO
-	if (mkfifo(exitFifo, 0660) == FALSE) { //TODO: Verify mode. As macro??
+	if (mkfifo(exitFifo, FIFO_MODE) == FALSE) { //TODO: Verify mode. As macro??
 		if (errno == EEXIST)
 			printf("FIFO '%s' already exits.\n", exitFifo);
 		else
 			printf("Can't create FIFO '%s'.\n", exitFifo);
 	
 	} else
-		printf("FIFO '%s'successfuly created.\n", exitFifo);
+		printf("FIFO '%s' successfuly created.\n", exitFifo);
 	
-	//Mecanismo de sincronização aqui, para garantir que os programas podem ser começados por qlq um dos files: generator.c or sauna.c, No Request required
+	//Mecanismo de sincronização aqui? TODO: Ver duvidas que estao no git
 
 	//Setting the Fifo's 'Flow'
 	printf("Waiting for generator.c to begin.\n");
@@ -98,7 +82,7 @@ int main (int argc, char** argv) {
 	}
 
 	//Interpreting the given arguments
-	int saunaSpaces = atoi(argv[2]);
+	int saunaSpaces = atoi(argv[1]);
 
 	//Initializing the Connection between the programs
 	if (confFifos() == FALSE) {

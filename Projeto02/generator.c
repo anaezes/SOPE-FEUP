@@ -7,20 +7,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
-/* MACROS */
-#define ENTRY 0
-#define EXIT 1
-
-#define TRUE 0
-#define FALSE -1
+#include "sauna.h"
 
 /**
  * Struct containing the args the program runs with.
  */
 typedef struct arg_struct {
     int numRequests;		/**< Number of Requests that shall be generated */
-    int maximumTime;		/**< Maximum Duration time that an Request can have, in miliSeconds. */
+    int maximumTime;		/**< Maximum Duration time that a Request can have, in miliSeconds. */
 } args;
 
 //struct semelhante a do gerador.c para conseguir entrepetar os pedidos
@@ -29,29 +23,29 @@ typedef struct arg_struct {
 
 /**
  * Function used to create and set the FIFO's, by directing them accordingly.
-
+ *
  * @return TRUE if no errors or problems happened, FALSE otherwise.
  */
 int confFifos () {
 
 	// Initializing FileDescriptors and Fifo's Name
 	int fd[2];
-	const char* entryFifo = "/tmp/rejeitados";
-	const char* exitFifo = "/tmp/entrada";
+	const char* entryFifo = FIFO_REJEITADOS;
+	const char* exitFifo = FIFO_ENTRADA;
 
-	unlink(exitFifo);// TODO: ASK PROFESSOR THE GIT DOUBT
+	//unlink(exitFifo);// TODO: ASK PROFESSOR THE GIT DOUBT
 
 	//Creating the FIFO
-	if (mkfifo(exitFifo, 0660) == FALSE) { //TODO: Verify mode. As macro??
+	if (mkfifo(exitFifo, FIFO_MODE) == FALSE) { //TODO: Verify mode. As macro??
 		if (errno == EEXIST)
 			printf("FIFO '%s' already exits.\n", exitFifo);
 		else
 			printf("Can't create FIFO '%s'.\n", exitFifo);
 	
 	} else
-		printf("FIFO '%s'successfuly created.\n", exitFifo);
+		printf("FIFO '%s' successfuly created.\n", exitFifo);
 	
-	//Mecanismo de sincronização aqui, para garantir que os programas podem ser começados por qlq um dos files: generator.c or sauna.c, No Request required
+	//Mecanismo de sincronização aqui? TODO: Ver duvidas que estao no git
 
 	//Setting the Fifo's 'Flow'
 	printf("Waiting for sauna.c to begin.\n");
