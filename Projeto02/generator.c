@@ -19,8 +19,8 @@
  * Struct containing the args the program runs with.
  */
 typedef struct arg_struct {
-    int numOrders;		/**< Number of Orders that shall be generated */
-    int maximumTime;	/**< Maximum Duration time that an order can have, in miliSeconds. */
+    int numRequests;		/**< Number of Requests that shall be generated */
+    int maximumTime;		/**< Maximum Duration time that an Request can have, in miliSeconds. */
 } args;
 
 //struct semelhante a do gerador.c para conseguir entrepetar os pedidos
@@ -51,7 +51,7 @@ int confFifos () {
 	} else
 		printf("FIFO '%s'successfuly created.\n", exitFifo);
 	
-	//Mecanismo de sincronização aqui, para garantir que os programas podem ser começados por qlq um dos files: generator.c or sauna.c, No Order required
+	//Mecanismo de sincronização aqui, para garantir que os programas podem ser começados por qlq um dos files: generator.c or sauna.c, No Request required
 
 	//Setting the Fifo's 'Flow'
 	printf("Waiting for sauna.c to begin.\n");
@@ -82,7 +82,7 @@ int destroyFifos () {
 /**
  * Function responsible for generating random Threads, according to the given argument.
  *
- * @param arguments. Struct containing the number of Orders that shall be generated, and their maximum duration.
+ * @param arguments. Struct containing the number of Requests that shall be generated, and their maximum duration.
  */
 void *generator(void * arguments){
 	
@@ -93,7 +93,7 @@ void *generator(void * arguments){
 	time_t t;
 	srand((unsigned) time(&t));
 
-	for(int i=0; i < user_args->numOrders; ++i)
+	for(int i=0; i < user_args->numRequests; ++i)
 		printf("It: %d  , time: %d   ,   gender: %c\n", i, rand()%user_args->maximumTime, genders[rand()%2]);
 
     pthread_exit(NULL);
@@ -105,7 +105,7 @@ int main(int argc, char** argv) {
 
 	//Number of arguments verification
 	if (argc != 3) {
-		printf("Usage: ./generator <number of Orders> <máx Time for each Order>\n");
+		printf("Usage: ./generator <number of Requests> <máx Time for each Request>\n");
 		exit(1);
 	}
 
@@ -123,7 +123,7 @@ int main(int argc, char** argv) {
 
 	//create an args struct to save values to be used in thread creation
 	args* generator_args = (args*) malloc(sizeof(args));
-	generator_args->numOrders = atoi(argv[1]);
+	generator_args->numRequests = atoi(argv[1]);
 	generator_args->maximumTime = atoi(argv[2]);
 
 	//create thread
@@ -132,5 +132,5 @@ int main(int argc, char** argv) {
 	}
 
 	return pthread_join(generatorTID, NULL); /* Wait until thread is finished */
-	return 0;
+	exit(0);
 }

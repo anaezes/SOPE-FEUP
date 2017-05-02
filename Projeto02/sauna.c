@@ -16,14 +16,14 @@
 #define FALSE -1
 
 /**
- * Struct containing the information about an Order.
+ * Struct containing the information about an Request.
  */
-typedef struct arg_struct {
-    int oid;			/**< Order ID. */
-    char gender;		/**< Gender of the person who made the Order. */
-    int time;			/**< Time the Order's owner wants to stay in the sauna. */
-    int numRejected;	/**< Number of times the Order was rejected. */
-} order;
+typedef struct request_struct {
+    int rid;			/**< Request ID. */
+    char gender;		/**< Gender of the person who made the Request. */
+    int time;			/**< Time the Request's owner wants to stay in the sauna. */
+    int numRejected;	/**< Number of times the Request was rejected. */
+} request;
 
 //PRIMEIRO TESTAR COM UMA MENSAGEM
 
@@ -52,7 +52,7 @@ int confFifos () {
 	} else
 		printf("FIFO '%s'successfuly created.\n", exitFifo);
 	
-	//Mecanismo de sincronização aqui, para garantir que os programas podem ser começados por qlq um dos files: generator.c or sauna.c, No Order required
+	//Mecanismo de sincronização aqui, para garantir que os programas podem ser começados por qlq um dos files: generator.c or sauna.c, No Request required
 
 	//Setting the Fifo's 'Flow'
 	printf("Waiting for generator.c to begin.\n");
@@ -103,7 +103,7 @@ int main (int argc, char** argv) {
 	//Initializing the Connection between the programs
 	if (confFifos() == FALSE) {
 		printf("Error on function confFifos().\n");
-		return FALSE;
+		exit(2);
 	} else
 		printf("Successfuly established connection to generator.c.\n\n");
 	
