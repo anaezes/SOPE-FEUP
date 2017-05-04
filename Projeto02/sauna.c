@@ -9,9 +9,6 @@
 #include <fcntl.h>
 #include "sauna.h"
 
-//PRIMEIRO TESTAR COM UMA MENSAGEM
-
-
 /**
  * Function used to create and set the FIFO's, by directing them accordingly.
  *

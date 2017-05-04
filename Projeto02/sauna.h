@@ -17,6 +17,8 @@
 #define TRUE 		0		/**< @brief Used to simulate the true value of a boolean. */
 #define FALSE 		-1		/**< @brief Used to simulate the false value of a boolean. */
 
+#define MAX_REQ_LEN	50		/**< @brief Maximum Lenght of the string representation of a Request. */	
+
 /**
  * Struct containing the information about a Request.
  */

@@ -14,12 +14,8 @@
  */
 typedef struct arg_struct {
     int numRequests;		/**< Number of Requests that shall be generated */
-    int maximumTime;		/**< Maximum Duration time that a Request can have, in miliSeconds. */
+    int maxTime;		/**< Maximum Duration time that a Request can have, in miliSeconds. */
 } args;
-
-//struct semelhante a do gerador.c para conseguir entrepetar os pedidos
-//PRIMEIRO TESTAR COM UMA MENSAGEM
-
 
 /**
  * Function used to create and set the FIFO's, by directing them accordingly.
@@ -74,21 +70,68 @@ int destroyFifos () {
 }
 
 /**
+ * Function responsible for filling the Buffer used on C Library function write, with a new Request.
+ *
+ * @param newRequest. Request to fill the Buffer with.
+ *
+ * @return 
+ */
+char* fillWBuffer(request* new_request) {
+	printf("It: %d  , time: %d   ,   gender: %c\n", new_request->rid, new_request->time, new_request->gender); //TODO: Delete this printf -> test purpose only
+	
+	//TODO: Review this code. Do it more efficiently ??? Nao me lembrei de nada melhor na altura.
+
+	//Filling the Write Buffer
+	char reqBuffer[MAX_REQ_LEN];
+	char extractor[6];
+
+	//Extracting the Request's RID
+	sprintf(extractor, "%d", new_request->rid);
+	strcat(reqBuffer, extractor);
+
+	//Extracting the Request's Time
+	sprintf(extractor, "%d", new_request->time);
+	strcat(reqBuffer, extractor);
+	
+	//Extracting the Request's gender
+	strcat(reqBuffer, &new_request->gender);
+	
+	//Extracting the number of times the Request was rejected
+	sprintf(extractor, "%d", new_request->numRejected);
+	strcat(reqBuffer, extractor);
+
+	printf("Working01?: %s.\n", reqBuffer);
+
+	return reqBuffer;
+}
+
+/**
  * Function responsible for generating random Threads, according to the given argument.
  *
  * @param arguments. Struct containing the number of Requests that shall be generated, and their maximum duration.
  */
 void *generator(void * arguments){
 	
+	//Arguments used for Requests creation
 	args* user_args = (args*) arguments;
-	char genders[] = {'M', 'F'};	
+	char genders[] = {'M', 'F'};
 	
 	//install random seed, based on time
 	time_t t;
 	srand((unsigned) time(&t));
 
-	for(int i=0; i < user_args->numRequests; ++i)
-		printf("It: %d  , time: %d   ,   gender: %c\n", i, rand()%user_args->maximumTime, genders[rand()%2]);
+	for(int i=0; i < user_args->numRequests; ++i) {
+		
+		//Generating a new Request
+		request* new_request = (request*) malloc(sizeof(request));
+		new_request->rid = i;
+		new_request->gender = (genders[rand() % 2]);
+		new_request->time = (rand() % (user_args->maxTime + 1));
+		new_request->numRejected = 0;
+
+		//Writing new Request for sauna.c
+		printf("Working02?: %s.\n", fillWBuffer(new_request));
+	}
 
     pthread_exit(NULL);
     return NULL;
@@ -111,14 +154,14 @@ int main(int argc, char** argv) {
 		printf("Successfuly established connection to sauna.c.\n\n");
 
 
-	/* // LUIS WORKING CODE FOR THREADS
+	//Multi Thread Operations
 	pthread_t generatorTID;
 	int pthread_res;
 
 	//create an args struct to save values to be used in thread creation
 	args* generator_args = (args*) malloc(sizeof(args));
 	generator_args->numRequests = atoi(argv[1]);
-	generator_args->maximumTime = atoi(argv[2]);
+	generator_args->maxTime = atoi(argv[2]);
 
 	//create thread
 	if((pthread_res = pthread_create(&generatorTID, NULL, &generator, (void *)generator_args)) != TRUE) {
