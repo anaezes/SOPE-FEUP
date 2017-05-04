@@ -70,39 +70,37 @@ int destroyFifos () {
 }
 
 /**
- * Function responsible for filling the Buffer used on C Library function write, with a new Request.
+ * Function responsible for filling the given Buffer, used on C Library function write, with a new Request.
+ * Request string will be in the following format: rid;time;gender;numRejected
  *
  * @param newRequest. Request to fill the Buffer with.
- *
- * @return 
+ * @param reqBuffer. Buffer that will be filled with th new Request.
  */
-char* fillWBuffer(request* new_request) {
+void fillWBuffer(request* new_request, char* reqBuffer) {
 	printf("It: %d  , time: %d   ,   gender: %c\n", new_request->rid, new_request->time, new_request->gender); //TODO: Delete this printf -> test purpose only
 	
 	//TODO: Review this code. Do it more efficiently ??? Nao me lembrei de nada melhor na altura.
 
-	//Filling the Write Buffer
-	char reqBuffer[MAX_REQ_LEN];
+	//Filling the Write Buffe
 	char extractor[6];
 
 	//Extracting the Request's RID
 	sprintf(extractor, "%d", new_request->rid);
-	strcat(reqBuffer, extractor);
+	strcpy(reqBuffer, extractor);
+	strcat(reqBuffer, ";");
 
 	//Extracting the Request's Time
 	sprintf(extractor, "%d", new_request->time);
 	strcat(reqBuffer, extractor);
+	strcat(reqBuffer, ";");
 	
 	//Extracting the Request's gender
 	strcat(reqBuffer, &new_request->gender);
+	strcat(reqBuffer, ";");
 	
 	//Extracting the number of times the Request was rejected
 	sprintf(extractor, "%d", new_request->numRejected);
 	strcat(reqBuffer, extractor);
-
-	printf("Working01?: %s.\n", reqBuffer);
-
-	return reqBuffer;
 }
 
 /**
@@ -129,8 +127,14 @@ void *generator(void * arguments){
 		new_request->time = (rand() % (user_args->maxTime + 1));
 		new_request->numRejected = 0;
 
+		//Filling the Buffer for C library function write
+		char reqBuffer[MAX_REQ_LEN];
+		fillWBuffer(new_request, reqBuffer);
+
 		//Writing new Request for sauna.c
-		printf("Working02?: %s.\n", fillWBuffer(new_request));
+		printf("CHECK: %s\n", reqBuffer); //TODO: Delete this line -> test purpose only
+		//write(fd[EXIT], reqBuffer, MAX_REQ_LEN);
+		
 	}
 
     pthread_exit(NULL);
