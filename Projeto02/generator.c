@@ -7,14 +7,15 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "sauna.h"
+#include "request.h"
 
 /**
  * Struct containing the args the program runs with.
  */
 typedef struct arg_struct {
     int numRequests;		/**< Number of Requests that shall be generated */
-    int maxTime;		/**< Maximum Duration time that a Request can have, in miliSeconds. */
+    int maxTime;			/**< Maximum Duration time that a Request can have, in miliSeconds. */
+    int* fd;				/**< Array containing the File Descriptors for the FIFO's. */
 } args;
 
 /**
@@ -22,10 +23,9 @@ typedef struct arg_struct {
  *
  * @return TRUE if no errors or problems happened, FALSE otherwise.
  */
-int confFifos () {
+int confFifos (int* fd) {
 
 	// Initializing FileDescriptors and Fifo's Name
-	int fd[2];
 	const char* entryFifo = FIFO_REJEITADOS;
 	const char* exitFifo = FIFO_ENTRADA;
 
@@ -133,7 +133,7 @@ void *generator(void * arguments){
 
 		//Writing new Request for sauna.c
 		printf("CHECK: %s\n", reqBuffer); //TODO: Delete this line -> test purpose only
-		//write(fd[EXIT], reqBuffer, MAX_REQ_LEN);
+		write(user_args->fd[EXIT], reqBuffer, MAX_REQ_LEN);
 		
 	}
 
@@ -151,7 +151,9 @@ int main(int argc, char** argv) {
 	}
 
 	//Initializing the Connection between the programs
-	if (confFifos() == FALSE) {
+	int fd[2];	//Array of Fd's related with FIFO's
+
+	if (confFifos(fd) == FALSE) {
 		printf("Error on function confFifos().\n");
 		exit(2);
 	} else
@@ -166,6 +168,7 @@ int main(int argc, char** argv) {
 	args* generator_args = (args*) malloc(sizeof(args));
 	generator_args->numRequests = atoi(argv[1]);
 	generator_args->maxTime = atoi(argv[2]);
+	generator_args->fd = fd;
 
 	//create thread
 	if((pthread_res = pthread_create(&generatorTID, NULL, &generator, (void *)generator_args)) != TRUE) {

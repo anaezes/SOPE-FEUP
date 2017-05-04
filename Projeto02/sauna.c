@@ -7,17 +7,16 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "sauna.h"
+#include "request.h"
 
 /**
  * Function used to create and set the FIFO's, by directing them accordingly.
  *
  * @return TRUE if no errors or problems happened, FALSE otherwise.
  */
-int confFifos () {
+int confFifos (int* fd) {
 
 	// Initializing FileDescriptors and Fifo's Name
-	int fd[2];
 	const char* exitFifo = FIFO_REJEITADOS;
 	const char* entryFifo = FIFO_ENTRADA;
 
@@ -61,6 +60,59 @@ int destroyFifos () {
 	return TRUE;
 }
 
+/**
+ * Function responsible for reading the FIFO and interpreting the received message from generator.c
+ *
+ * @return. Pointer to the request containing the received information. It returns a Null Pointer if an error ocurred.
+ */
+request* reqReader(int* fd) {
+	request* new_request = (request*) malloc(sizeof(request));
+
+	//Helper Buffer were message will be saved before being interpreted
+	char reqBuffer[MAX_REQ_LEN];
+	
+	if (read(fd[ENTRY], reqBuffer, MAX_REQ_LEN) == -1) {
+		printf("Error trying to read from FIFO.\n");
+		return NULL;
+	}
+	
+	//String interpretation
+	//Interpretation of the Request's RID
+	int end = 0;
+	while (reqBuffer[end] != ';') {
+		if (reqBuffer[++end] == ';') {
+			char dummie[10];
+			strncpy(dummie, reqBuffer, end);
+			new_request->rid = atoi(dummie);
+		}
+	}
+
+	//Intepretation of the Request's Time
+	int begin = ++end;
+	while (reqBuffer[end] != ';') {
+		if (reqBuffer[++end] == ';') {
+			char dummie[10];
+			strncpy(dummie, reqBuffer+begin, (end-begin));
+			new_request->time = atoi(dummie);
+		}
+	}
+
+	//Intepretation of the Request's Gender
+	new_request->gender = reqBuffer[++end];
+
+	//Intepretation of the number of times the Request was rejected
+	new_request->numRejected = atoi(&reqBuffer[end+=2]);
+	
+	return new_request;
+}
+
+/**
+ * Function responsile for interpreting the string representing a request
+ */
+void reqInterpreter(char* message) {
+
+}
+
 //Gerador de multi threads, cada um para cada novo pedido que conté a struct x.
 
 
@@ -82,7 +134,9 @@ int main (int argc, char** argv) {
 	int saunaSpaces = atoi(argv[1]);
 
 	//Initializing the Connection between the programs
-	if (confFifos() == FALSE) {
+	int fd[2];	//Array of Fd's related with FIFO's
+
+	if (confFifos(fd) == FALSE) {
 		printf("Error on function confFifos().\n");
 		exit(2);
 	} else
@@ -90,6 +144,9 @@ int main (int argc, char** argv) {
 	
 	//TODO: não esquecer de instalar handlers para o control C. ? Para não ficar eternamente a espera que o outro processo comece.
 	//Qd um terminar deve avisar o companheiro que ele terminou para este terminar tb. Mt trabalho? Ou cenas extras sem necessidade de avaliação?
+
+	reqReader(fd);
+
 
 	//atexit handller que chama a destroyFifos?? Parece-me bem e lógico, perguntar ao prof na sexta tb
 

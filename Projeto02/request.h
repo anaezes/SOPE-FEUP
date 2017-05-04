@@ -1,5 +1,5 @@
-#ifndef __SAUNA_H
-#define __SAUNA_H
+#ifndef __REQUEST_H
+#define __REQUEST_H
 
 /**
  * File containing useful Macros and Strcuts for generator.c and sauna.c
@@ -30,4 +30,4 @@ typedef struct request_struct {
 } request;
 
 
-#endif /* __SAUNA_H */
+#endif /* __REQUEST_H */
