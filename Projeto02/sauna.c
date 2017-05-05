@@ -94,12 +94,12 @@ int main (int argc, char** argv) {
 	//TODO: não esquecer de instalar handlers para o control C. ? Para não ficar eternamente a espera que o outro processo comece.
 	//Qd um terminar deve avisar o companheiro que ele terminou para este terminar tb. Mt trabalho? Ou cenas extras sem necessidade de avaliação?
 
-	reqReader(fd);
-	reqReader(fd);
-	reqReader(fd);
-	reqReader(fd);
-	reqReader(fd);
-	reqReader(fd);
+	readRequest(fd);
+	readRequest(fd);
+	readRequest(fd);
+	readRequest(fd);
+	readRequest(fd);
+	readRequest(fd);
 
 	//atexit handller que chama a destroyFifos?? Parece-me bem e lógico, perguntar ao prof na sexta tb
 

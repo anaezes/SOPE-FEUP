@@ -1,6 +1,6 @@
 #include "request.h"
 
-request* reqReader(int* fd) {
+request* readRequest(int* fd) {
 	request* new_request = (request*) malloc(sizeof(request));
 
 	//Helper Buffer were message will be saved before being interpreted

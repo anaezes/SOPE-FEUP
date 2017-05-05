@@ -41,7 +41,7 @@ typedef struct request_struct {
  *
  * @return. Pointer to the request containing the received information. It returns a Null Pointer if an error ocurred.
  */
-request* reqReader(int* fd);
+request* readRequest(int* fd);
 
 /**
  * Function responsible for writing the given request to the other program, using a FIFO.
