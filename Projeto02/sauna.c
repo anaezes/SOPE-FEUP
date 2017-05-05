@@ -81,8 +81,9 @@ request* reqReader(int* fd) {
 	int end = 0;
 	while (reqBuffer[end] != ';') {
 		if (reqBuffer[++end] == ';') {
-			char dummie[10];
+			char dummie[10];	//Helper buffer
 			strncpy(dummie, reqBuffer, end);
+			dummie[end] = '\0';		// TODO: PERGUNTAR AO PROF. WTF THE BUG LMAO. ALOCAVA SP O MESMO ESPEAÇO, ENTAO FICAVA POLUIDO ATE SE ESCREVER POR CIMA. NECESSARIA ESTA SAFE GUARD? JESUS
 			new_request->rid = atoi(dummie);
 		}
 	}
@@ -91,8 +92,9 @@ request* reqReader(int* fd) {
 	int begin = ++end;
 	while (reqBuffer[end] != ';') {
 		if (reqBuffer[++end] == ';') {
-			char dummie[10];
+			char dummie[10];	//helper buffer
 			strncpy(dummie, reqBuffer+begin, (end-begin));
+			dummie[(end-begin)] = '\0';
 			new_request->time = atoi(dummie);
 		}
 	}
@@ -102,15 +104,9 @@ request* reqReader(int* fd) {
 
 	//Intepretation of the number of times the Request was rejected
 	new_request->numRejected = atoi(&reqBuffer[end+=2]);
+	printf("It: %d  , time: %d   ,   gender: %c, numRejected: %i\n", new_request->rid, new_request->time, new_request->gender, new_request->numRejected); //TODO: Delete this printf -> test purpose only
 	
 	return new_request;
-}
-
-/**
- * Function responsile for interpreting the string representing a request
- */
-void reqInterpreter(char* message) {
-
 }
 
 //Gerador de multi threads, cada um para cada novo pedido que conté a struct x.
@@ -146,7 +142,11 @@ int main (int argc, char** argv) {
 	//Qd um terminar deve avisar o companheiro que ele terminou para este terminar tb. Mt trabalho? Ou cenas extras sem necessidade de avaliação?
 
 	reqReader(fd);
-
+	reqReader(fd);
+	reqReader(fd);
+	reqReader(fd);
+	reqReader(fd);
+	reqReader(fd);
 
 	//atexit handller que chama a destroyFifos?? Parece-me bem e lógico, perguntar ao prof na sexta tb
 

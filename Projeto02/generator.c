@@ -132,7 +132,6 @@ void *generator(void * arguments){
 		fillWBuffer(new_request, reqBuffer);
 
 		//Writing new Request for sauna.c
-		printf("CHECK: %s\n", reqBuffer); //TODO: Delete this line -> test purpose only
 		write(user_args->fd[EXIT], reqBuffer, MAX_REQ_LEN);
 		
 	}
