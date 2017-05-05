@@ -21,6 +21,8 @@ typedef struct arg_struct {
 /**
  * Function used to create and set the FIFO's, by directing them accordingly.
  *
+ * @param fd. Array containing the File Descriptors for the FIFO's
+ *
  * @return TRUE if no errors or problems happened, FALSE otherwise.
  */
 int confFifos (int* fd) {
@@ -70,40 +72,6 @@ int destroyFifos () {
 }
 
 /**
- * Function responsible for filling the given Buffer, used on C Library function write, with a new Request.
- * Request string will be in the following format: rid;time;gender;numRejected
- *
- * @param newRequest. Request to fill the Buffer with.
- * @param reqBuffer. Buffer that will be filled with th new Request.
- */
-void fillWBuffer(request* new_request, char* reqBuffer) {
-	printf("It: %d  , time: %d   ,   gender: %c\n", new_request->rid, new_request->time, new_request->gender); //TODO: Delete this printf -> test purpose only
-	
-	//TODO: Review this code. Do it more efficiently ??? Nao me lembrei de nada melhor na altura.
-
-	//Filling the Write Buffe
-	char extractor[6];
-
-	//Extracting the Request's RID
-	sprintf(extractor, "%d", new_request->rid);
-	strcpy(reqBuffer, extractor);
-	strcat(reqBuffer, ";");
-
-	//Extracting the Request's Time
-	sprintf(extractor, "%d", new_request->time);
-	strcat(reqBuffer, extractor);
-	strcat(reqBuffer, ";");
-	
-	//Extracting the Request's gender
-	strcat(reqBuffer, &new_request->gender);
-	strcat(reqBuffer, ";");
-	
-	//Extracting the number of times the Request was rejected
-	sprintf(extractor, "%d", new_request->numRejected);
-	strcat(reqBuffer, extractor);
-}
-
-/**
  * Function responsible for generating random Threads, according to the given argument.
  *
  * @param arguments. Struct containing the number of Requests that shall be generated, and their maximum duration.
@@ -128,12 +96,8 @@ void *generator(void * arguments){
 		new_request->numRejected = 0;
 
 		//Filling the Buffer for C library function write
-		char reqBuffer[MAX_REQ_LEN];
-		fillWBuffer(new_request, reqBuffer);
-
-		//Writing new Request for sauna.c
-		write(user_args->fd[EXIT], reqBuffer, MAX_REQ_LEN);
 		
+		writeRequest(new_request, user_args->fd);
 	}
 
     pthread_exit(NULL);

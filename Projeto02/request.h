@@ -1,6 +1,11 @@
 #ifndef __REQUEST_H
 #define __REQUEST_H
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+
 /**
  * File containing useful Macros and Strcuts for generator.c and sauna.c
  */
@@ -29,5 +34,22 @@ typedef struct request_struct {
     int numRejected;	/**< Number of times the Request was rejected. */
 } request;
 
+/**
+ * Function responsible for reading the FIFO and interpreting the received message from the other program
+ *
+ * @param fd. Array containing the File Descriptors for the FIFO's.
+ *
+ * @return. Pointer to the request containing the received information. It returns a Null Pointer if an error ocurred.
+ */
+request* reqReader(int* fd);
+
+/**
+ * Function responsible for writing the given request to the other program, using a FIFO.
+ * Written string will be in the following format: rid;time;gender;numRejected
+ *
+ * @param new_request. Request to fill the Buffer with.
+ * @param fd. Array containing the File Descriptors for the FIFO's.
+ */
+void writeRequest(request* new_request, int* fd);
 
 #endif /* __REQUEST_H */

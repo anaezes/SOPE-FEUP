@@ -12,6 +12,8 @@
 /**
  * Function used to create and set the FIFO's, by directing them accordingly.
  *
+ * @param fd. Array containing the File Descriptors for the FIFO's.
+ *
  * @return TRUE if no errors or problems happened, FALSE otherwise.
  */
 int confFifos (int* fd) {
@@ -58,55 +60,6 @@ int confFifos (int* fd) {
 int destroyFifos () {
 
 	return TRUE;
-}
-
-/**
- * Function responsible for reading the FIFO and interpreting the received message from generator.c
- *
- * @return. Pointer to the request containing the received information. It returns a Null Pointer if an error ocurred.
- */
-request* reqReader(int* fd) {
-	request* new_request = (request*) malloc(sizeof(request));
-
-	//Helper Buffer were message will be saved before being interpreted
-	char reqBuffer[MAX_REQ_LEN];
-	
-	if (read(fd[ENTRY], reqBuffer, MAX_REQ_LEN) == -1) {
-		printf("Error trying to read from FIFO.\n");
-		return NULL;
-	}
-	
-	//String interpretation
-	//Interpretation of the Request's RID
-	int end = 0;
-	while (reqBuffer[end] != ';') {
-		if (reqBuffer[++end] == ';') {
-			char dummie[10];	//Helper buffer
-			strncpy(dummie, reqBuffer, end);
-			dummie[end] = '\0';		// TODO: PERGUNTAR AO PROF. WTF THE BUG LMAO. ALOCAVA SP O MESMO ESPEAÇO, ENTAO FICAVA POLUIDO ATE SE ESCREVER POR CIMA. NECESSARIA ESTA SAFE GUARD? JESUS
-			new_request->rid = atoi(dummie);
-		}
-	}
-
-	//Intepretation of the Request's Time
-	int begin = ++end;
-	while (reqBuffer[end] != ';') {
-		if (reqBuffer[++end] == ';') {
-			char dummie[10];	//helper buffer
-			strncpy(dummie, reqBuffer+begin, (end-begin));
-			dummie[(end-begin)] = '\0';
-			new_request->time = atoi(dummie);
-		}
-	}
-
-	//Intepretation of the Request's Gender
-	new_request->gender = reqBuffer[++end];
-
-	//Intepretation of the number of times the Request was rejected
-	new_request->numRejected = atoi(&reqBuffer[end+=2]);
-	printf("It: %d  , time: %d   ,   gender: %c, numRejected: %i\n", new_request->rid, new_request->time, new_request->gender, new_request->numRejected); //TODO: Delete this printf -> test purpose only
-	
-	return new_request;
 }
 
 //Gerador de multi threads, cada um para cada novo pedido que conté a struct x.
