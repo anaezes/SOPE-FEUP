@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 /**
  * File containing useful Macros and Strcuts for generator.c and sauna.c
@@ -22,7 +25,7 @@
 #define TRUE 		0		/**< @brief Used to simulate the true value of a boolean. */
 #define FALSE 		-1		/**< @brief Used to simulate the false value of a boolean. */
 
-#define MAX_REQ_LEN	50		/**< @brief Maximum Lenght of the string representation of a Request. */	
+#define MAX_REQ_LEN	50		/**< @brief Maximum Lenght of the string representation of a Request. */
 
 /**
  * Struct containing the information about a Request.
@@ -51,5 +54,12 @@ request* readRequest(int* fd);
  * @param fd. Array containing the File Descriptors for the FIFO's.
  */
 void writeRequest(request* new_request, int* fd);
+
+/**
+ * Function responsible for creating the given Fifos.
+ *
+ * @param currFifo. Pointer to the Fifo's name.
+ */
+void createFifo(const char* currFifo);
 
 #endif /* __REQUEST_H */

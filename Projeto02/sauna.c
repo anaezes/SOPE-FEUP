@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <errno.h>
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -22,19 +21,9 @@ int confFifos (int* fd) {
 	const char* exitFifo = FIFO_REJEITADOS;
 	const char* entryFifo = FIFO_ENTRADA;
 
-	//	unlink(exitFifo);// TODO: ASK PROFESSOR THE GIT DOUBT
-
-	//Creating the FIFO
-	if (mkfifo(exitFifo, FIFO_MODE) == FALSE) { //TODO: Verify mode. As macro??
-		if (errno == EEXIST)
-			printf("FIFO '%s' already exits.\n", exitFifo);
-		else
-			printf("Can't create FIFO '%s'.\n", exitFifo);
-	
-	} else
-		printf("FIFO '%s' successfuly created.\n", exitFifo);
-	
-	//Mecanismo de sincronização aqui? TODO: Ver duvidas que estao no git
+	//Creating both FIFO's
+  createFifo(entryFifo);
+  createFifo(exitFifo);
 
 	//Setting the Fifo's 'Flow'
 	printf("Waiting for generator.c to begin.\n");
@@ -42,7 +31,7 @@ int confFifos (int* fd) {
 	if ((fd[ENTRY] = open(entryFifo, O_RDONLY)) == FALSE) {
 		printf("Error opening FIFO '%s' for read purposes.\n", entryFifo);
 		return FALSE;
-	
+
 	} else if ((fd[EXIT] = open(exitFifo, O_WRONLY)) == FALSE) {
 		printf("Error opening FIFO: '%s' for write purposes.\n", exitFifo);
 		return FALSE;
@@ -72,7 +61,7 @@ int destroyFifos () {
 
 //Função main que faz recepção e processamento e no final cama função de estatisytica
 int main (int argc, char** argv) {
-	
+
 	//Number of arguments verification
 	if (argc != 2) {
 		printf("Usage: ./sauna <number of places in the sauna>\n");
@@ -90,10 +79,8 @@ int main (int argc, char** argv) {
 		exit(2);
 	} else
 		printf("Successfuly established connection to generator.c.\n\n");
-	
-	//TODO: não esquecer de instalar handlers para o control C. ? Para não ficar eternamente a espera que o outro processo comece.
-	//Qd um terminar deve avisar o companheiro que ele terminou para este terminar tb. Mt trabalho? Ou cenas extras sem necessidade de avaliação?
 
+	//Tests
 	readRequest(fd);
 	readRequest(fd);
 	readRequest(fd);

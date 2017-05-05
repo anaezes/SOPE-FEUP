@@ -1,13 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <errno.h>
 #include <pthread.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include "request.h"
+//Other includes are made on request.h
 
 /**
  * Struct containing the args the program runs with.
@@ -31,19 +25,9 @@ int confFifos (int* fd) {
 	const char* entryFifo = FIFO_REJEITADOS;
 	const char* exitFifo = FIFO_ENTRADA;
 
-	//unlink(exitFifo);// TODO: ASK PROFESSOR THE GIT DOUBT
-
-	//Creating the FIFO
-	if (mkfifo(exitFifo, FIFO_MODE) == FALSE) { //TODO: Verify mode. As macro??
-		if (errno == EEXIST)
-			printf("FIFO '%s' already exits.\n", exitFifo);
-		else
-			printf("Can't create FIFO '%s'.\n", exitFifo);
-	
-	} else
-		printf("FIFO '%s' successfuly created.\n", exitFifo);
-	
-	//Mecanismo de sincronização aqui? TODO: Ver duvidas que estao no git
+	//Creating both FIFO's
+  createFifo(entryFifo);
+  createFifo(exitFifo);
 
 	//Setting the Fifo's 'Flow'
 	printf("Waiting for sauna.c to begin.\n");
@@ -51,12 +35,12 @@ int confFifos (int* fd) {
 	if ((fd[EXIT] = open(exitFifo, O_WRONLY)) == FALSE) {
 		printf("Error opening FIFO '%s' for write purposes.\n", exitFifo);
 		return FALSE;
-	
+
 	} else if ((fd[ENTRY] = open(entryFifo, O_RDONLY)) == FALSE) {
 		printf("Error opening FIFO '%s' for read purposes.\n", entryFifo);
 		return FALSE;
 	}
-	
+
 	//Fifo's are now ready for use
 	return TRUE;
 }
@@ -77,17 +61,17 @@ int destroyFifos () {
  * @param arguments. Struct containing the number of Requests that shall be generated, and their maximum duration.
  */
 void *generator(void * arguments){
-	
+
 	//Arguments used for Requests creation
 	args* user_args = (args*) arguments;
 	char genders[] = {'M', 'F'};
-	
+
 	//install random seed, based on time
 	time_t t;
 	srand((unsigned) time(&t));
 
 	for(int i=0; i < user_args->numRequests; ++i) {
-		
+
 		//Generating a new Request
 		request* new_request = (request*) malloc(sizeof(request));
 		new_request->rid = i;
@@ -95,8 +79,7 @@ void *generator(void * arguments){
 		new_request->time = (rand() % (user_args->maxTime + 1));
 		new_request->numRejected = 0;
 
-		//Filling the Buffer for C library function write
-		
+		//Writing the newe request to the other program
 		writeRequest(new_request, user_args->fd);
 	}
 
