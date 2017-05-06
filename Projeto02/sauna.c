@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include "request.h"
 #include <sys/time.h>
+#include <errno.h>
 
 /**
  * Struct containing the information about a user that is in sauna
@@ -39,7 +40,7 @@ int confFifos (int* fd) {
 	//Setting the Fifo's 'Flow'
 	printf("Waiting for generator.c to begin.\n");
 
-	if ((fd[ENTRY] = open(entryFifo, O_RDONLY)) == FALSE) {
+	if ((fd[ENTRY] = open(entryFifo, O_RDONLY | O_NONBLOCK)) == FALSE) {
 		printf("Error opening FIFO '%s' for read purposes.\n", entryFifo);
 		return FALSE;
 
@@ -123,6 +124,8 @@ int requestDecision(request* curr_request,char* gender, int* fd){
 
 
 
+
+
 //Função main que faz recepção e processamento e no final cama função de estatisytica
 int main (int argc, char** argv) {
 
@@ -147,14 +150,23 @@ int main (int argc, char** argv) {
 
 	//Tests
 
-		
-		requestDecision(readRequest(fd), &gender, fd);
-		
-		requestDecision(readRequest(fd), &gender, fd);
+		request* new_request;
+		while(1)
+			{
+				if((new_request = readRequest(fd)) == NULL){
+					if(errno == EAGAIN || errno == EWOULDBLOCK)
+					{
+						printf("Break\n");
+						break;
+					}
+				}
+				else
+					requestDecision(new_request, &gender, fd);
+			}
 
 
-
-
+	//to wait for all threads
+	pthread_exit(NULL);
 	//atexit handller que chama a destroyFifos?? Parece-me bem e lógico, perguntar ao prof na sexta tb
 
 	exit(0);

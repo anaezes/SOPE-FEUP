@@ -44,6 +44,26 @@ request* readRequest(int* fd) {
 	return new_request;
 }
 
+/*int readNmbofRequests(int* fd, int size){
+
+	char requests[sizeof(int)];
+	if (read(fd[ENTRY], requests, size) == -1) {
+		printf("Error trying to read from FIFO.\n");
+		return NULL;
+	}
+	return atoi(requests);
+
+}
+
+
+int writeNmbofRequests(int nmb_of_requests, int*fd){
+
+	char requests[sizeof(int)];
+	int size = sprintf(requests, "%d", nmb_of_requests);
+	write(fd[EXIT], requests, size);
+	return size;
+	
+}*/
 
 void writeRequest(request* new_request, int* fd) {
 	printf("It: %d  , time: %d   ,   gender: %c\n", new_request->rid, new_request->time, new_request->gender); //TODO: Delete this printf -> test purpose only
