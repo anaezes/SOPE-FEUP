@@ -7,6 +7,17 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "request.h"
+#include <sys/time.h>
+
+/**
+ * Struct containing the information about a user that is in sauna
+ */
+typedef struct saunaRequest{
+
+	request* request; /**< User's request */
+	struct timeval start_time; /**< time when user went in sauna */
+} sauna_user;
+
 
 /**
  * Function used to create and set the FIFO's, by directing them accordingly.
@@ -52,10 +63,52 @@ int destroyFifos () {
 }
 
 //Gerador de multi threads, cada um para cada novo pedido que conté a struct x.
+void* saunaHandler(void* args){
+
+	printf("Esta na sauna\n");
+	request* new_request = (request*) args;
+	
+	sleep(new_request->time/1000);
+	write(STDOUT_FILENO, "Finish sauna\n", 12);
+	
+	 pthread_exit(NULL);
+    return NULL;
+
+}
 
 
 
 //função de processo de decisão
+int requestDecision(request* curr_request,char* gender, int* fd){
+	
+
+	if(*gender == NO_GENDER || curr_request->gender == *gender){
+		printf("Request ID: %d is on, with time: %d\n", curr_request->rid, curr_request->time);
+		//create detached thread
+		pthread_t new_user_tid;
+		int pthread_res;
+		pthread_attr_t new_user_attr;
+		pthread_attr_init(&new_user_attr); // get default pthread definitions
+		pthread_attr_setdetachstate(&new_user_attr, PTHREAD_CREATE_DETACHED); // set thread as detached
+
+		if((pthread_res = pthread_create(&new_user_tid, &new_user_attr, &saunaHandler, (void *)curr_request)) != TRUE){
+			printf("Error creating generator's thread: %s", strerror(pthread_res));
+			return FALSE;
+		}
+		//pthread_join(new_user_tid, NULL); /* Wait until thread is finished */
+
+		*gender = curr_request->gender;
+ 		//printf("Actual gender sauna %c\n", *gender);
+		return TRUE;
+	}
+	else
+	{
+		writeRequest(curr_request, fd);
+		return FALSE;
+	}
+		
+	
+}
 
 
 
@@ -70,6 +123,7 @@ int main (int argc, char** argv) {
 
 	//Interpreting the given arguments
 	int saunaSpaces = atoi(argv[1]);
+	char gender = NO_GENDER;
 
 	//Initializing the Connection between the programs
 	int fd[2];	//Array of Fd's related with FIFO's
@@ -81,12 +135,14 @@ int main (int argc, char** argv) {
 		printf("Successfuly established connection to generator.c.\n\n");
 
 	//Tests
-	readRequest(fd);
-	readRequest(fd);
-	readRequest(fd);
-	readRequest(fd);
-	readRequest(fd);
-	readRequest(fd);
+
+		
+		requestDecision(readRequest(fd), &gender, fd);
+		
+		requestDecision(readRequest(fd), &gender, fd);
+
+
+
 
 	//atexit handller que chama a destroyFifos?? Parece-me bem e lógico, perguntar ao prof na sexta tb
 

@@ -27,6 +27,8 @@
 
 #define MAX_REQ_LEN	50		/**< @brief Maximum Lenght of the string representation of a Request. */
 
+#define NO_GENDER 'N' 		/**< @brief gender for when sauna is empty*/
+
 /**
  * Struct containing the information about a Request.
  */
