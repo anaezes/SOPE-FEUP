@@ -67,11 +67,22 @@ void* saunaHandler(void* args){
 
 	printf("Esta na sauna\n");
 	request* new_request = (request*) args;
-	
-	sleep(new_request->time/1000);
-	write(STDOUT_FILENO, "Finish sauna\n", 12);
-	
-	 pthread_exit(NULL);
+	//variables to calculate delta time
+	struct timeval start_time, curr_time;
+	gettimeofday(&start_time, NULL);
+	int delta_time;
+
+	do{
+		//update current time variable
+		gettimeofday(&curr_time, NULL);
+		//update delta time variable
+		delta_time = curr_time.tv_usec-start_time.tv_usec;
+		printf("em sauna com delta: %d\n", delta_time);
+
+	}while(delta_time < new_request->time); // verify if maximum time was not reached yet
+
+	printf("fim sauna com delta: %d\n", delta_time);
+	pthread_exit(NULL);
     return NULL;
 
 }
@@ -95,10 +106,10 @@ int requestDecision(request* curr_request,char* gender, int* fd){
 			printf("Error creating generator's thread: %s", strerror(pthread_res));
 			return FALSE;
 		}
-		//pthread_join(new_user_tid, NULL); /* Wait until thread is finished */
-
+		
+		//update sauna gender
 		*gender = curr_request->gender;
- 		//printf("Actual gender sauna %c\n", *gender);
+ 		
 		return TRUE;
 	}
 	else
