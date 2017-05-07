@@ -14,6 +14,10 @@ request* Request(int rid, char gend, int time) {
 		return new_request;
 }
 
+void deleteRequest(request* request) {
+    free(request);
+}
+
 request* readRequest(int* fd) {
 	request* new_request = (request*) malloc(sizeof(request));
 

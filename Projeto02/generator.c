@@ -96,7 +96,7 @@ void updateRequest(request* received_req, int* fd) {
 
 	//If a Request was already rejected 2 times, this means this is the third time.
 	if (received_req->numRejected >= 2) {
-		//TODO: destroy and gravar na estatistica
+		//TODO: destroy and gravar na estatistica. Funcao que grava na estatistica depois de recolher info deve destruir o pedido
 	} else {
 		//Increment and write again to sauna
 		++(received_req->numRejected);
@@ -119,6 +119,8 @@ int requestListener(int generated_req, int number_req, int* fd) {
 	//Rid of a request will be -1, when the sauna is empty. Therefore, if a sauna is empty and all the requests were processed both programs should end.
 	if (received_req->rid == FALSE)
 	{
+		deleteRequest(received_req);
+
 		if (generated_req == number_req)
 		{
 			if (close(fd[EXIT]) == FALSE)

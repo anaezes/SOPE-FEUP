@@ -51,6 +51,13 @@ typedef struct request_struct {
 request* Request(int rid, char gend, int time);
 
 /**
+ * Function used to free the space allocated by a request.
+ *
+ * @request. Request to be deleted.
+ */
+void deleteRequest(request* request);
+
+/**
  * Function responsible for reading the FIFO and interpreting the received message from the other program
  *
  * @param fd. Array containing the File Descriptors for the FIFO's.
