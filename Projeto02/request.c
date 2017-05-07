@@ -1,5 +1,19 @@
 #include "request.h"
 
+request* Request(int rid, char gend, int time) {
+		request* new_request = (request*) malloc(sizeof(request));
+		
+		//Initialized with given arguments
+		new_request->rid = rid;
+		new_request->gender = gend;
+		new_request->time = time;
+		
+		//Number of Times the Request was rejected logically initialiazed as 0
+		new_request->numRejected = 0;
+
+		return new_request;
+}
+
 request* readRequest(int* fd) {
 	request* new_request = (request*) malloc(sizeof(request));
 
@@ -16,7 +30,7 @@ request* readRequest(int* fd) {
 	int end = 0;
 	while (reqBuffer[end] != ';') {
 		if (reqBuffer[++end] == ';') {
-			char dummie[10];	//Helper buffer
+			char dummie[15];	//Helper buffer
 			strncpy(dummie, reqBuffer, end);
 			dummie[end] = '\0';
 			new_request->rid = atoi(dummie);
@@ -27,7 +41,7 @@ request* readRequest(int* fd) {
 	int begin = ++end;
 	while (reqBuffer[end] != ';') {
 		if (reqBuffer[++end] == ';') {
-			char dummie[10];	//helper buffer
+			char dummie[15];	//helper buffer
 			strncpy(dummie, reqBuffer+begin, (end-begin));
 			dummie[(end-begin)] = '\0';
 			new_request->time = atoi(dummie);

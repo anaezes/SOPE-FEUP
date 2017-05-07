@@ -26,8 +26,8 @@ int confFifos (int* fd) {
 	const char* exitFifo = FIFO_ENTRADA;
 
 	//Creating both FIFO's
-  createFifo(entryFifo);
-  createFifo(exitFifo);
+  	createFifo(entryFifo);
+  	createFifo(exitFifo);
 
 	//Setting the Fifo's 'Flow'
 	printf("Waiting for sauna.c to begin.\n");
@@ -73,11 +73,8 @@ void *generator(void * arguments){
 	for(int i=0; i < user_args->numRequests; ++i) {
 
 		//Generating a new Request
-		request* new_request = (request*) malloc(sizeof(request));
-		new_request->rid = i;
-		new_request->gender = (genders[rand() % 2]);
-		new_request->time = (rand() % (user_args->maxTime + 1));
-		new_request->numRejected = 0;
+		request* new_request;	
+		new_request = Request(i, genders[rand() % 2], rand() % (user_args->maxTime + 1));
 
 		//Writing the newe request to the other program
 		writeRequest(new_request, user_args->fd);

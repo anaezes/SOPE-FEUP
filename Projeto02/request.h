@@ -38,6 +38,19 @@ typedef struct request_struct {
 } request;
 
 /**
+ * Request Constructor.
+ * Takes the given arguments and creates a new request with them.
+ * The parameter numRejected will be initialized as 0, logically.
+ *
+ * @param rid. New Request's ID.
+ * @param gend. New Request's Gender.
+ * @param time. New Request's Time.
+ *
+ * @return Pointer to the created Requested.
+ */
+request* Request(int rid, char gend, int time);
+
+/**
  * Function responsible for reading the FIFO and interpreting the received message from the other program
  *
  * @param fd. Array containing the File Descriptors for the FIFO's.
