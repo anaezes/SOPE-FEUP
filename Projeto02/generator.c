@@ -36,7 +36,7 @@ int confFifos (int* fd) {
 		printf("Error opening FIFO '%s' for write purposes.\n", exitFifo);
 		return FALSE;
 
-	} else if ((fd[ENTRY] = open(entryFifo, O_RDONLY)) == FALSE) {
+	} else if ((fd[ENTRY] = open(entryFifo, O_RDONLY| O_NONBLOCK)) == FALSE) {
 		printf("Error opening FIFO '%s' for read purposes.\n", entryFifo);
 		return FALSE;
 	}
@@ -69,6 +69,8 @@ void *generator(void * arguments){
 	//install random seed, based on time
 	time_t t;
 	srand((unsigned) time(&t));
+	char new_file_path;
+	//if((fptr= fopen)
 
 	for(int i=0; i < user_args->numRequests; ++i) {
 
@@ -81,6 +83,7 @@ void *generator(void * arguments){
 
 		//Writing the newe request to the other program
 		writeRequest(new_request, user_args->fd);
+
 	}
 
     pthread_exit(NULL);

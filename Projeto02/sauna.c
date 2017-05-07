@@ -157,7 +157,7 @@ int main (int argc, char** argv) {
 					if(errno == EAGAIN || errno == EWOULDBLOCK)
 					{
 						printf("Break\n");
-						break;
+						continue;
 					}
 				}
 				else
