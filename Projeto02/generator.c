@@ -47,16 +47,6 @@ int confFifos (int* fd) {
 }
 
 /**
- * Function used to destroy the FIFO's that were created during the usage of this program.
- *
- * @return TRUE if no errors or problems happened, FALSE otherwise.
- */
-int destroyFifos () {
-
-	return TRUE;
-}
-
-/**
  * Function responsible for generating random Threads, according to the given argument.
  *
  * @param arguments. Struct containing the number of Requests that shall be generated, and their maximum duration.
@@ -75,11 +65,11 @@ void *generator(void * arguments){
 
 		//Generating a new Request
 		request* new_request;	
-		new_request = Request(i, genders[rand() % 2], rand() % (user_args->maxTime + 1));
+		new_request = Request(i, genders[rand() % 2], (rand() % user_args->maxTime) + 1);
 
 		//Writing the new request to the other program
 		writeRequest(new_request, user_args->fd);
-		*(user_args->generated_req)++;
+		*(user_args->generated_req) += 1;
 	}
 
     pthread_exit(NULL);
@@ -96,7 +86,7 @@ void updateRequest(request* received_req, int* fd) {
 
 	//If a Request was already rejected 2 times, this means this is the third time.
 	if (received_req->numRejected >= 2) {
-		//TODO: destroy and gravar na estatistica. Funcao que grava na estatistica depois de recolher info deve destruir o pedido
+		//TODO: gravar na estatistica. Funcao que grava na estatistica depois de recolher info deve destruir o pedido
 	} else {
 		//Increment and write again to sauna
 		++(received_req->numRejected);
@@ -153,6 +143,8 @@ int main(int argc, char** argv) {
 	} else
 		printf("Successfuly established connection to sauna.c.\n\n");
 
+	//Installing atexitHandler
+	atexit(destroyFifos);
 
 	//Multi Thread Operations
 	pthread_t generatorTID;
@@ -163,6 +155,12 @@ int main(int argc, char** argv) {
 	generator_args->numRequests = atoi(argv[1]);
 	generator_args->maxTime = atoi(argv[2]);
 	generator_args->fd = fd;
+
+	//SafeGuards
+	if (generator_args->numRequests <= 0 || generator_args->maxTime <= 0) {
+		printf("./generator arguments must be both bigger than 0.\n");
+		exit(1);
+	}
 
 	//Creation of variable for arg struct, shared by main thread and the other
 	int* generated_req = (int*) malloc(sizeof(int)); 
@@ -175,9 +173,13 @@ int main(int argc, char** argv) {
 	}
 
 	//Request Listener & Finish Process Decision
+
+
+
+
+
+	pthread_join(generatorTID, NULL); /* Wait until thread is finished */
 	printf("Generated: %i\n", *(generator_args->generated_req));
 
-
-	return pthread_join(generatorTID, NULL); /* Wait until thread is finished */
 	exit(0);
 }

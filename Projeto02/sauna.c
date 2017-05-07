@@ -41,16 +41,6 @@ int confFifos (int* fd) {
 	return TRUE;
 }
 
-/**
- * Function used to destroy the FIFO's that were created during the usage of this program.
- *
- * @return TRUE if no errors or problems happened, FALSE otherwise.
- */
-int destroyFifos () {
-
-	return TRUE;
-}
-
 //Gerador de multi threads, cada um para cada novo pedido que conté a struct x.
 
 
@@ -71,6 +61,12 @@ int main (int argc, char** argv) {
 	//Interpreting the given arguments
 	int saunaSpaces = atoi(argv[1]);
 
+	//SafeGuard
+	if (saunaSpaces <= 0) {
+		printf("./sauna argument must be bigger than 0");
+		exit(1);
+	}
+
 	//Initializing the Connection between the programs
 	int fd[2];	//Array of Fd's related with FIFO's
 
@@ -79,6 +75,9 @@ int main (int argc, char** argv) {
 		exit(2);
 	} else
 		printf("Successfuly established connection to generator.c.\n\n");
+
+	//Installing atexitHandler
+	atexit(destroyFifos);
 
 	//Tests
 	readRequest(fd);

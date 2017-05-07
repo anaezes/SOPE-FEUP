@@ -103,3 +103,8 @@ void createFifo(const char* currFifo) {
 	} else
 		printf("FIFO '%s' successfuly created.\n", currFifo);
 }
+
+void destroyFifos () {
+	unlink(FIFO_ENTRADA);
+	unlink(FIFO_REJEITADOS);
+}

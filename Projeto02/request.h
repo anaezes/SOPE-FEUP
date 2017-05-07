@@ -82,4 +82,10 @@ void writeRequest(request* new_request, int* fd);
  */
 void createFifo(const char* currFifo);
 
+/**
+ * Function used to destroy the FIFO's that were created during the usage of this program.
+ * Used as an atexit handler.
+ */
+void destroyFifos ();
+
 #endif /* __REQUEST_H */
