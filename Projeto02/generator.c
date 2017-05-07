@@ -94,6 +94,14 @@ void *generator(void * arguments){
  */
 void updateRequest(request* received_req, int* fd) {
 
+	//If a Request was already rejected 2 times, this means this is the third time.
+	if (received_req->numRejected >= 2) {
+		//TODO: destroy and gravar na estatistica
+	} else {
+		//Increment and write again to sauna
+		++(received_req->numRejected);
+		writeRequest(received_req, fd);
+	}
 }
 
 /**
