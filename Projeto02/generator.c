@@ -78,7 +78,7 @@ void *generator(void * arguments){
 		request* new_request = (request*) malloc(sizeof(request));
 		new_request->rid = i;
 		new_request->gender = (genders[rand() % 2]);
-		new_request->time = (rand() % (user_args->maxTime + 1));
+		new_request->time = (rand() % user_args->maxTime) + 1 ;
 		new_request->numRejected = 0;
 
 		//Writing the newe request to the other program
