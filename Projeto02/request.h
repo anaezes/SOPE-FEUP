@@ -27,6 +27,9 @@
 
 #define MAX_REQ_LEN	50		/**< @brief Maximum Lenght of the string representation of a Request. */
 
+#define FIFO_CLOSED		-1	/**< @brief Value of the RID of the read request, meaning the FIFO was closed on the other end. */
+#define ACKNOLEDGE_RID	-2	/**< @brief Value of the RID of a sent request, meaning another request was successfuly processed. */
+
 /**
  * Struct containing the information about a Request.
  */

@@ -19,14 +19,23 @@ void deleteRequest(request* request) {
 }
 
 request* readRequest(int* fd) {
-	request* new_request = (request*) malloc(sizeof(request));
-
-	//Helper Buffer were message will be saved before being interpreted
+	//Helper Buffer were message will be saved before being interpreted & variable for saving read result
 	char reqBuffer[MAX_REQ_LEN];
+	int read_result;
 
-	if (read(fd[ENTRY], reqBuffer, MAX_REQ_LEN) == -1) {
+	if ((read_result = read(fd[ENTRY], reqBuffer, MAX_REQ_LEN)) == FALSE) {
 		printf("Error trying to read from FIFO.\n");
 		return NULL;
+	}
+
+	//Allocating space for the new request
+	request* new_request = (request*) malloc(sizeof(request));
+
+	//When read_result = 0, both programs should end
+	if (read_result == 0) {
+		printf("The other end closed this FIFO, returning request with rid = FIFO_CLOSED.\n");	//TODO: ELIMINATE THIS, TEST PURPOSE
+		new_request->rid = FIFO_CLOSED;
+		return new_request;
 	}
 
 	//String interpretation

@@ -44,9 +44,20 @@ int confFifos (int* fd) {
 //Gerador de multi threads, cada um para cada novo pedido que conté a struct x.
 
 
+/**
+ * Function used to send and acknoledge request to generator.c, meaning sauna.c successfuly handled another request.
+ *
+ * @param fd. Array containing the File Descriptors for the FIFO's.
+ */
+void send_confirmation(int* fd) {
+	request* ack_request;	
+	ack_request = Request(ACKNOLEDGE_RID, 'M', 0);
+
+	writeRequest(ack_request, fd);
+}
 
 //função de processo de decisão
-
+//TODO	: REESCREVER, ISTO APENAS FOI PARA OS MEUS TESTES
 
 
 //Função main que faz recepção e processamento e no final cama função de estatisytica
