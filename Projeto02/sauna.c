@@ -63,29 +63,33 @@ int destroyFifos () {
 	return TRUE;
 }
 
+float timedifference_msec(struct timeval t0, struct timeval t1)
+{
+    return (t1.tv_sec - t0.tv_sec) * 1000.0f + (t1.tv_usec - t0.tv_usec) / 1000.0f;
+}
+
+
 //Gerador de multi threads, cada um para cada novo pedido que conté a struct x.
 void* saunaHandler(void* args){
 
-	printf("Esta na sauna\n");
 	request* new_request = (request*) args;
-	//variables to calculate delta time
-	struct timeval start_time, curr_time;
-	gettimeofday(&start_time, NULL);
-	int delta_time;
+	printf("Request ID: %d ESTA na sauna\n", new_request->rid);
 
-	do{
-		//update current time variable
-		gettimeofday(&curr_time, NULL);
-		//update delta time variable
-		delta_time = curr_time.tv_usec-start_time.tv_usec;
-		printf("em sauna com delta: %d\n", delta_time);
+  	struct timeval start_time, curr_time;
+  	int elapsed;
 
-	}while(delta_time < new_request->time); // verify if maximum time was not reached yet
+   	gettimeofday(&start_time, 0);
+   	usleep((new_request->time)*1000);
+   	gettimeofday(&curr_time, 0);
 
-	printf("fim sauna com delta: %d\n", delta_time);
+   	elapsed = timedifference_msec(start_time, curr_time);
+
+   	printf("Request ID: %d SAIU da sauna, em %d milliseconds.\n", new_request->rid, elapsed);
+
+    free(args);
+
 	pthread_exit(NULL);
     return NULL;
-
 }
 
 
@@ -95,7 +99,7 @@ int requestDecision(request* curr_request,char* gender, int* fd){
 	
 
 	if(*gender == NO_GENDER || curr_request->gender == *gender){
-		printf("Request ID: %d is on, with time: %d\n", curr_request->rid, curr_request->time);
+		printf("\n\nRequest ID: %d is on, with time: %d\n", curr_request->rid, curr_request->time);
 		//create detached thread
 		pthread_t new_user_tid;
 		int pthread_res;
@@ -115,6 +119,7 @@ int requestDecision(request* curr_request,char* gender, int* fd){
 	}
 	else
 	{
+		printf("\n\nRequest ID DENIED: %d\n", curr_request->rid);
 		writeRequest(curr_request, fd);
 		return FALSE;
 	}
@@ -149,7 +154,6 @@ int main (int argc, char** argv) {
 		printf("Successfuly established connection to generator.c.\n\n");
 
 	//Tests
-
 		request* new_request;
 		while(1)
 			{
