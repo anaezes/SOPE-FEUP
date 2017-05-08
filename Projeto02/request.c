@@ -66,14 +66,14 @@ request* readRequest(int* fd) {
 
 	//Intepretation of the number of times the Request was rejected
 	new_request->numRejected = atoi(&reqBuffer[end+=2]);
-	printf("It: %d  , time: %d   ,   gender: %c, numRejected: %i\n", new_request->rid, new_request->time, new_request->gender, new_request->numRejected); //TODO: Delete this printf -> test purpose only
+	printf("READ:  It: %d  , time: %d   ,   gender: %c, numRejected: %i\n", new_request->rid, new_request->time, new_request->gender, new_request->numRejected); //TODO: Delete this printf -> test purpose only
 
 	return new_request;
 }
 
 
 void writeRequest(request* new_request, int* fd) {
-	printf("It: %d  , time: %d   ,   gender: %c\n", new_request->rid, new_request->time, new_request->gender); //TODO: Delete this printf -> test purpose only
+	printf("WRITE: It: %d  , time: %d   ,   gender: %c\n", new_request->rid, new_request->time, new_request->gender); //TODO: Delete this printf -> test purpose only
 
 	//TODO: Review this code. Do it more efficiently ??? Nao me lembrei de nada melhor na altura.
 

@@ -57,7 +57,6 @@ void send_confirmation(int* fd) {
 }
 
 //função de processo de decisão
-//TODO	: REESCREVER, ISTO APENAS FOI PARA OS MEUS TESTES
 
 
 //Função main que faz recepção e processamento e no final cama função de estatisytica
@@ -90,13 +89,24 @@ int main (int argc, char** argv) {
 	//Installing atexitHandler
 	atexit(destroyFifos);
 
-	//Tests
-	readRequest(fd);
-	readRequest(fd);
-	readRequest(fd);
-	readRequest(fd);
-	readRequest(fd);
-	readRequest(fd);
+	//TODO	: REESCREVER, ISTO APENAS FOI PARA OS MEUS TESTES
+	request* rReq;
+	while (1) {
+		rReq = readRequest(fd);
+
+		if (rReq->rid == FIFO_CLOSED) 
+		{
+			if (close(fd[EXIT]) == FALSE)
+				printf("Failed upon closing the fd[EXIT]\n");
+			break;
+		}
+
+		//Para rejeitar alguns
+		if ((rReq->rid % 4) == 0)
+			writeRequest(rReq, fd);
+		else
+			send_confirmation(fd);
+	}
 
 	//atexit handller que chama a destroyFifos?? Parece-me bem e lógico, perguntar ao prof na sexta tb
 

@@ -79,20 +79,33 @@ void *generator(void * arguments){
  * Function responsible for updating a received Request accordingly.
  *
  * @param received_req. Request that was received from the other program.
+ * @param generated_req. Number of requests that the generator should generate.
  * @param processed_req. Number of requests that were already concluded.
  * @param fd. Array containing the File Descriptors for the FIFO's
+ *
+ * @return TRUE if the program shoudl end, FALSE otherwise.
  */
-void updateRequest(request* received_req, int* processed_req, int* fd) {
+int updateRequest(request* received_req, int generated_req, int* processed_req, int* fd) {
 
 	//If a Request was already rejected 2 times, this means this is the third time.
 	if (received_req->numRejected >= 2) {
-		(*processed_req) += 1;
-		//TODO: gravar na estatistica. Funcao que grava na estatistica depois de recolher info deve destruir o pedido
+
+		if (((*processed_req)+=1) == generated_req) 
+		{
+			//TODO: gravar na estatistica. Funcao que grava na estatistica depois de recolher info deve destruir o pedido
+
+			//All requests were atended and handled, programs shall finish.
+			if (close(fd[EXIT]) == FALSE)
+				printf("Failed upon closing the fd[EXIT]\n");
+			return TRUE;
+		}
 	} else {
 		//Increment and write again to sauna
 		++(received_req->numRejected);
 		writeRequest(received_req, fd);
 	}
+
+	return FALSE;
 }
 
 /**
@@ -120,11 +133,9 @@ int requestListener(int generated_req, int* processed_req, int* fd) {
 			
 		} else
 			return FALSE;
-
-	} else
-		updateRequest(received_req, processed_req, fd);
-
-	return FALSE;
+	}
+	
+	return updateRequest(received_req, generated_req, processed_req, fd);
 }
 
 int main(int argc, char** argv) {
@@ -151,6 +162,9 @@ int main(int argc, char** argv) {
 	pthread_t generatorTID;
 	int pthread_res;
 
+	//Value containing the number of already processed requests
+	int processed_req;
+
 	//create an args struct to save values to be used in thread creation
 	args* generator_args = (args*) malloc(sizeof(args));
 	generator_args->numRequests = atoi(argv[1]);
@@ -169,8 +183,13 @@ int main(int argc, char** argv) {
 	}
 
 	//Request Listener & Finish Process Decision
-	
-	
+
+	//TEST_ DELETE THIS AFTER. SOME CODE CAN BE USED
+	while (1) {
+		if (requestListener(generator_args->numRequests, &processed_req, fd) == TRUE)
+			break;
+	}
+
 	pthread_join(generatorTID, NULL); /* Wait until thread is finished */
 
 	exit(0);
