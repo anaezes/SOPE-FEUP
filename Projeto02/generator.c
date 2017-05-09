@@ -45,6 +45,8 @@ int confFifos (int* fd) {
 	return TRUE;
 }
 
+
+
 /**
  * Function responsible for generating random Threads, according to the given argument.
  *
@@ -154,6 +156,17 @@ int main(int argc, char** argv) {
 		exit(2);
 	} else
 		printf("Successfuly established connection to sauna.c.\n\n");
+
+
+	//open activity file
+
+	int activity_fd;
+	
+	if((activity_fd = openActivityFile('G')) == FALSE){
+		printf("Error opening generator's activity file\n");
+		exit(2);
+	}else
+		printf("Generator's activity file was successfuly opened.\n\n");	
 
 	//Installing atexitHandler
 	atexit(destroyFifos);

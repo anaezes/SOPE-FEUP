@@ -1,4 +1,5 @@
 #include "request.h"
+#include <fcntl.h>
 
 request* Request(int rid, char gend, int time) {
 		request* new_request = (request*) malloc(sizeof(request));
@@ -116,4 +117,38 @@ void createFifo(const char* currFifo) {
 void destroyFifos () {
 	unlink(FIFO_ENTRADA);
 	unlink(FIFO_REJEITADOS);
+}
+
+int openActivityFile(char file){
+
+	//create full path
+	const char* activity_file;
+	char* finalpath = (char*) malloc(sizeof(pid_t)+9);
+	
+	if(file == OPEN_GENERATOR_FILE)
+		activity_file = GENERATOR_ACTIVITY_FILE;
+	else
+		activity_file = SAUNA_ACTIVITY_FILE;
+
+	sprintf(finalpath, "%s%d", activity_file,getpid());
+
+	int activity_fd;
+
+	activity_fd = open(finalpath, O_WRONLY| O_CREAT, ACTIVITY_FILE_MODE);
+	printf("PID: %d", getpid());
+
+	return activity_fd;
+}
+
+
+void writeActivity(int* activity_descriptor, int inst, request* curr_request, int pid, int tid, char* tip, char file){
+
+	FILE* activity_file = fdopen(*activity_descriptor, "wb");
+
+	if(file == OPEN_GENERATOR_FILE)
+		fprintf(activity_file ,"%d - %d - %d: %c - %d - %s\n", inst, pid, curr_request->rid, curr_request->gender, curr_request->time, tip);
+	else	
+		fprintf(activity_file ,"%d - %d - %d - %d: %c - %d - %s\n", inst, pid, tid, curr_request->rid, curr_request->gender, curr_request->time, tip);
+
+
 }

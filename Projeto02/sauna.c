@@ -85,8 +85,15 @@ void send_confirmation(int* fd) {
 }
 
 //função de processo de decisão
-int requestDecision(request* curr_request,char* gender, int* fd){
+int requestDecision(request* curr_request,char* gender, int* fd, struct timeval start_time){
 	
+	struct timeval curr_time;
+	gettimeofday(&curr_time, 0);
+	char tip[9];
+	//write activity
+	strcpy(tip, "RECEBIDO");
+	writeActivity(fd, timedifference_msec(start_time, curr_time), curr_request, getpid(), getpid(), tip, 'S');
+	memset(tip,0,strlen(tip));
 
 	if(*gender == NO_GENDER || curr_request->gender == *gender){
 		printf("\n\nRequest ID: %d is on, with time: %d\n", curr_request->rid, curr_request->time);
@@ -102,6 +109,11 @@ int requestDecision(request* curr_request,char* gender, int* fd){
 			return FALSE;
 		}
 		
+		//write activity
+		strcpy(tip, "SERVIDO");
+	  	gettimeofday(&curr_time, 0);
+	  	writeActivity(fd, timedifference_msec(start_time, curr_time), curr_request, getpid(), pthread_res, tip, 'S');
+		
 		//update sauna gender
 		*gender = curr_request->gender;
  		
@@ -109,6 +121,11 @@ int requestDecision(request* curr_request,char* gender, int* fd){
 	}
 	else
 	{
+		//write activity
+		strcpy(tip, "REJEITADO");
+		gettimeofday(&curr_time, 0);
+	  	writeActivity(fd, timedifference_msec(start_time, curr_time), curr_request, getpid(), getpid(), tip, 'S');
+
 		printf("\n\nRequest ID DENIED: %d\n", curr_request->rid);
 		writeRequest(curr_request, fd);
 		return FALSE;
@@ -132,6 +149,7 @@ int main (int argc, char** argv) {
 	//Interpreting the given arguments
 	int saunaSpaces = atoi(argv[1]);
 
+
 	//SafeGuard
 	if (saunaSpaces <= 0) {
 		printf("./sauna argument must be bigger than 0");
@@ -140,6 +158,8 @@ int main (int argc, char** argv) {
 
 	//Initializing the Connection between the programs
 	int fd[2];	//Array of Fd's related with FIFO's
+	char gender = NO_GENDER;
+
 
 	if (confFifos(fd) == FALSE) {
 		printf("Error on function confFifos().\n");
@@ -147,12 +167,28 @@ int main (int argc, char** argv) {
 	} else
 		printf("Successfuly established connection to generator.c.\n\n");
 
+
+	//open activity file
+
+	int activity_fd;
+	
+	if((activity_fd = openActivityFile('S')) == FALSE){
+		printf("Error opening sauna's activity file\n");
+		exit(2);
+	}else
+		printf("Sauna's activity file was successfuly opened.\n\n");	
+
 	//Installing atexitHandler
 	atexit(destroyFifos);
+
+	struct timeval start_time;
+	gettimeofday(&start_time, 0);
+
 
 	//TODO	: REESCREVER, ISTO APENAS FOI PARA OS MEUS TESTES
 	request* rReq;
 	while (1) {
+
 		rReq = readRequest(fd);
 
 		if (rReq->rid == FIFO_CLOSED) 
@@ -161,12 +197,13 @@ int main (int argc, char** argv) {
 				printf("Failed upon closing the fd[EXIT]\n");
 			break;
 		}
-
 		//Para rejeitar alguns
 		if ((rReq->rid % 4) == 0)
 			writeRequest(rReq, fd);
-		else
+		else{
+			requestDecision(rReq, &gender, &activity_fd, start_time);
 			send_confirmation(fd);
+		}
 	}
 
 	//atexit handller que chama a destroyFifos?? Parece-me bem e lógico, perguntar ao prof na sexta tb
