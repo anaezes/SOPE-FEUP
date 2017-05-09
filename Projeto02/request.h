@@ -30,6 +30,8 @@
 #define FIFO_CLOSED		-1	/**< @brief Value of the RID of the read request, meaning the FIFO was closed on the other end. */
 #define ACKNOLEDGE_RID	-2	/**< @brief Value of the RID of a sent request, meaning another request was successfuly processed. */
 
+#define NO_GENDER 'N' /**< @brief Value of sauna's gender when it is empty */
+
 /**
  * Struct containing the information about a Request.
  */
