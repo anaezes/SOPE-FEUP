@@ -10,6 +10,10 @@
 #include <fcntl.h>
 #include "request.h"
 
+#include <semaphore.h>
+int freeSeats, saunaSpaces;
+sem_t* sem_sauna;
+
 /**
  * Function used to create and set the FIFO's, by directing them accordingly.
  *
@@ -50,7 +54,15 @@ float timedifference_msec(struct timeval t0, struct timeval t1)
 
 //Gerador de multi threads, cada um para cada novo pedido que conté a struct x.
 void* saunaHandler(void* args){
+	sem_wait(sem_sauna);
 
+	// testes
+	int tmp = -1;
+	sem_getvalue(sem_sauna, &tmp);
+	printf("LUGARES VAZIOS: %d\n", tmp);
+
+
+	freeSeats--;
 	request* new_request = (request*) args;
 	printf("Request ID: %d ESTA na sauna\n", new_request->rid);
 
@@ -68,6 +80,10 @@ void* saunaHandler(void* args){
     free(args);
 
 	pthread_exit(NULL);
+
+	freeSeats++;
+	sem_post(sem_sauna);
+
     return NULL;
 }
 
@@ -115,7 +131,10 @@ int requestDecision(request* curr_request,char* gender, int* fd, struct timeval 
 	  	writeActivity(fd, timedifference_msec(start_time, curr_time), curr_request, getpid(), pthread_res, tip, 'S');
 		
 		//update sauna gender
-		*gender = curr_request->gender;
+		if(freeSeats == saunaSpaces)
+			*gender = NO_GENDER;
+		else
+			*gender = curr_request->gender;
  		
 		return TRUE;
 	}
@@ -147,7 +166,8 @@ int main (int argc, char** argv) {
 	}
 
 	//Interpreting the given arguments
-	int saunaSpaces = atoi(argv[1]);
+	saunaSpaces = atoi(argv[1]);
+	freeSeats = saunaSpaces;
 
 
 	//SafeGuard
@@ -184,8 +204,15 @@ int main (int argc, char** argv) {
 	struct timeval start_time;
 	gettimeofday(&start_time, 0);
 
+	//Ensure that the semaph does not exist
+	sem_unlink("/sem_sauna");
+	sem_sauna = sem_open("/sem_sauna", O_CREAT, SEMAPHORE_MODE, saunaSpaces);
+     if(sem_sauna == SEM_FAILED) {
+       perror("Error to create semaphore for sauna.");
+       exit(3);
+	}
 
-	//TODO	: REESCREVER, ISTO APENAS FOI PARA OS MEUS TESTES
+
 	request* rReq;
 	while (1) {
 

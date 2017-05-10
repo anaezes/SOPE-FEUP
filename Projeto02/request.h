@@ -20,7 +20,8 @@
 #define FIFO_ENTRADA	"/tmp/entrada"
 #define FIFO_REJEITADOS	"/tmp/rejeitados"
 
-#define FIFO_MODE	0660	/**< @brief Mode used on FIFO creation - function mkfifo(). */
+#define FIFO_MODE		0660	/**< @brief Mode used on FIFO creation - function mkfifo(). */
+#define SEMAPHORE_MODE	0644	/**< @brief Mode used on Semaphore creation. */
 
 #define TRUE 		0		/**< @brief Used to simulate the true value of a boolean. */
 #define FALSE 		-1		/**< @brief Used to simulate the false value of a boolean. */
