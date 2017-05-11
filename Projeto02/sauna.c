@@ -126,7 +126,6 @@ int requestDecision(request* curr_request, char* gender, int* fd, struct timeval
 		pthread_attr_t new_user_attr;
 		pthread_attr_init(&new_user_attr); // get default pthread definitions
 		pthread_attr_setdetachstate(&new_user_attr, PTHREAD_CREATE_JOINABLE);
-		//pthread_attr_setdetachstate(&new_user_attr, PTHREAD_CREATE_DETACHED); // set thread as detached
 
 		if((pthread_res = pthread_create(&new_user_tid, &new_user_attr, &saunaHandler, (void *)curr_request)) != TRUE){
 			printf("Error creating generator's thread: %s", strerror(pthread_res));
@@ -162,10 +161,7 @@ int requestDecision(request* curr_request, char* gender, int* fd, struct timeval
 		return FALSE;
 	}
 
-	
 }
-
-
 
 
 //Função main que faz recepção e processamento e no final cama função de estatisytica
@@ -223,6 +219,7 @@ int main (int argc, char** argv) {
 		exit(3);
 	}
 
+	//struct of threads info
 	request_threads threadsInfo;
 	threadsInfo.nRequests = 0; 
 	threadsInfo.threads = malloc(1024*sizeof(pthread_t));
@@ -250,7 +247,6 @@ int main (int argc, char** argv) {
 	int i = 0; 
 	while(i < threadsInfo.nRequests) {
 		pthread_join(threadsInfo.threads[i], NULL);
-		printf("i: %d \n", i);
 		i++;
 	}
 
