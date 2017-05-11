@@ -11,13 +11,19 @@
 #include "request.h"
 #include <semaphore.h>
 
-int freeSeats, saunaSpaces;
 sem_t* sem_sauna;
 
 typedef struct thread_struct{
 	int nRequests;		
-	pthread_t* threads;	
+	pthread_t* threads;
+	int freeSeats;
+	int saunaSpaces;
 } request_threads;
+
+typedef struct thread_args_struct{	
+	request* requestThread;	
+	int freeSeats;
+} thread_args;
 
 
 /**
@@ -59,34 +65,25 @@ float timedifference_msec(struct timeval t0, struct timeval t1)
 }
 
 //Gerador de multi threads, cada um para cada novo pedido que conté a struct x.
-void* saunaHandler(void* args){
+void* saunaHandler(void* args) {
 	sem_wait(sem_sauna);
+	thread_args* newThread = (thread_args*) args;
 
-	// testes
-	int tmp = -1;
-	sem_getvalue(sem_sauna, &tmp);
-	printf("LUGARES VAZIOS: %d\n", tmp);
-
-	freeSeats--;
-	request* new_request = (request*) args;
-	printf("Request ID: %d ESTA na sauna\n", new_request->rid);
+	printf("Request ID: %d is in sauna\n", newThread->requestThread->rid);
 
 	struct timeval start_time, curr_time;
 	int elapsed;
 
 	gettimeofday(&start_time, 0);
-	usleep((new_request->time)*1000);
+	usleep((newThread->requestThread->time)*1000);
 	gettimeofday(&curr_time, 0);
 
 	elapsed = timedifference_msec(start_time, curr_time);
 
-	printf("Request ID: %d SAIU da sauna, em %d milliseconds.\n", new_request->rid, elapsed);
+	printf("Request ID: %d exited sauna, em %d milliseconds.\n", newThread->requestThread->rid, elapsed);
 
 	free(args);
-
-	pthread_exit(NULL);
-
-	freeSeats++;
+	newThread->freeSeats++;
 	sem_post(sem_sauna);
 
 	return NULL;
@@ -118,8 +115,13 @@ int requestDecision(request* curr_request, char* gender, int* fd, struct timeval
 	memset(tip,0,strlen(tip));
 
 	if(*gender == NO_GENDER || curr_request->gender == *gender){
-		printf("\n\nRequest ID: %d is on, with time: %d\n", curr_request->rid, curr_request->time);
+		threadsInfo->freeSeats--;
+		printf("\n\nRequest ID: %d is on, gender %c, with time: %d\n", curr_request->rid, curr_request->gender, curr_request->time);
 
+		thread_args* threadsArgs = malloc(sizeof(thread_args));
+		threadsArgs->requestThread = curr_request; 
+		threadsArgs->freeSeats = threadsInfo->freeSeats; 
+	
 		//create detached thread
 		pthread_t new_user_tid;
 		int pthread_res;
@@ -127,7 +129,7 @@ int requestDecision(request* curr_request, char* gender, int* fd, struct timeval
 		pthread_attr_init(&new_user_attr); // get default pthread definitions
 		pthread_attr_setdetachstate(&new_user_attr, PTHREAD_CREATE_JOINABLE);
 
-		if((pthread_res = pthread_create(&new_user_tid, &new_user_attr, &saunaHandler, (void *)curr_request)) != TRUE){
+		if((pthread_res = pthread_create(&new_user_tid, &new_user_attr, &saunaHandler, (void *)threadsArgs)) != TRUE){
 			printf("Error creating generator's thread: %s", strerror(pthread_res));
 			return FALSE;
 		}
@@ -142,7 +144,7 @@ int requestDecision(request* curr_request, char* gender, int* fd, struct timeval
 		writeActivity(fd, timedifference_msec(start_time, curr_time), curr_request, getpid(), pthread_res, tip, 'S');
 		
 		//update sauna gender
-		if(freeSeats == saunaSpaces)
+		if(threadsInfo->freeSeats == threadsInfo->saunaSpaces)
 			*gender = NO_GENDER;
 		else
 			*gender = curr_request->gender;
@@ -174,10 +176,8 @@ int main (int argc, char** argv) {
 	}
 
 	//Interpreting the given arguments
-	saunaSpaces = atoi(argv[1]);
-	freeSeats = saunaSpaces;
-
-
+	int saunaSpaces = atoi(argv[1]);
+	
 	//SafeGuard
 	if (saunaSpaces <= 0) {
 		printf("./sauna argument must be bigger than 0");
@@ -223,6 +223,8 @@ int main (int argc, char** argv) {
 	request_threads threadsInfo;
 	threadsInfo.nRequests = 0; 
 	threadsInfo.threads = malloc(1024*sizeof(pthread_t));
+	threadsInfo.freeSeats = saunaSpaces; 
+	threadsInfo.saunaSpaces = saunaSpaces; 
 
 	request* rReq;
 	while (1) {
