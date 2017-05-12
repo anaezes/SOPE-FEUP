@@ -8,8 +8,10 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "request.h"
+#include "activity.h"
 //Other includes are made on request.h
+
+
 
 /**
  * Struct containing the args the program runs with.
@@ -19,10 +21,12 @@ typedef struct arg_struct {
     int maxTime;			/**< Maximum Duration time that a Request can have, in miliSeconds. */
     int* fd;				/**< Array containing the File Descriptors for the FIFO's. */
     int* activity_fd;        /**< File Descriptor for the generator's activity file*/
+    generator_activity* activity;
 } args;
 
 /**< Initial program time */
 struct timeval start_time;
+
 
 /**
  * Function used to create and set the FIFO's, by directing them accordingly.
@@ -87,6 +91,7 @@ void *generator(void * arguments){
 		//Writing the new request to the other program
 		writeRequest(new_request, user_args->fd);
 		gettimeofday(&curr_time, 0);
+		incvaluegenerator(user_args->activity, new_request->gender, tip);
 		writeActivity(user_args->activity_fd, timedifference_msec(start_time, curr_time), new_request, getpid(), 0, tip, 'G');
 	}
 
@@ -105,7 +110,7 @@ void *generator(void * arguments){
  *
  * @return TRUE if the program shoudl end, FALSE otherwise.
  */
-int updateRequest(request* received_req, int generated_req, int* processed_req, int* fd, int* activity_fd) {
+int updateRequest(request* received_req, int generated_req, int* processed_req, int* fd, int* activity_fd, generator_activity* activity) {
 
 	//values to activity file
 	struct timeval curr_time;
@@ -125,6 +130,7 @@ int updateRequest(request* received_req, int generated_req, int* processed_req, 
 		}
 		strcpy(tip, "DESCARTADO");
 		gettimeofday(&curr_time, 0); // get current time
+		incvaluegenerator(activity, received_req->gender, tip);
 		writeActivity(activity_fd, timedifference_msec(start_time, curr_time), received_req, getpid(), 0, tip, 'G');
 		free(received_req);
 	} else {
@@ -134,6 +140,7 @@ int updateRequest(request* received_req, int generated_req, int* processed_req, 
 		writeRequest(received_req, fd);
 		strcpy(tip, "PEDIDO");
 		gettimeofday(&curr_time, 0);
+		incvaluegenerator(activity, received_req->gender, tip);
 		writeActivity(activity_fd,timedifference_msec(start_time, curr_time) , received_req, getpid(), 0, tip, 'G');
 	}
 
@@ -149,12 +156,12 @@ int updateRequest(request* received_req, int generated_req, int* processed_req, 
  *
  * @return TRUE if the program should end, FALSE otherwise.
  */
-int requestListener(int generated_req, int* processed_req, int* fd, int* activity_fd) {
+int requestListener(int generated_req, int* processed_req, int* fd, int* activity_fd, generator_activity* activity) {
 	request* received_req = readRequest(fd);
 	
 	//values to the activity file
 	struct timeval curr_time;
-	char tip[] = "RECEBIDO";
+	char tip[] = "REJEITADO";
 
 
 	if (received_req->rid == ACKNOLEDGE_RID) 
@@ -174,12 +181,14 @@ int requestListener(int generated_req, int* processed_req, int* fd, int* activit
 	
 
 	gettimeofday(&curr_time, 0);
+	incvaluegenerator(activity, received_req->gender, tip);
 	writeActivity(activity_fd, timedifference_msec(start_time, curr_time), received_req, getpid(), 0,tip, 'G');
 
-	return updateRequest(received_req, generated_req, processed_req, fd, activity_fd);
+	return updateRequest(received_req, generated_req, processed_req, fd, activity_fd, activity);
 }
 
 int main(int argc, char** argv) {
+
 
 
 	//Number of arguments verification
@@ -214,6 +223,7 @@ int main(int argc, char** argv) {
 	//Inicialize strat time variable
 	gettimeofday(&start_time, 0);
 
+
 	//Multi Thread Operations
 	pthread_t generatorTID;
 	int pthread_res;
@@ -222,12 +232,24 @@ int main(int argc, char** argv) {
 	int processed_req;
 
 
+
+	//create and initialize activity values
+	generator_activity* activity_values = (generator_activity*) malloc(sizeof(generator_activity));
+	activity_values->male_generated = 0;
+	activity_values->female_generated = 0;
+	activity_values->male_rejected = 0;
+	activity_values->female_rejected = 0;
+	activity_values->male_discarded = 0;
+	activity_values->female_discarded = 0;
+
+
 	//create an args struct to save values to be used in thread creation
 	args* generator_args = (args*) malloc(sizeof(args));
 	generator_args->numRequests = atoi(argv[1]);
 	generator_args->maxTime = atoi(argv[2]);
 	generator_args->fd = fd;
 	generator_args->activity_fd = &activity_fd;
+	generator_args->activity = activity_values;
 
 	//SafeGuards
 	if (generator_args->numRequests <= 0 || generator_args->maxTime <= 0) {
@@ -245,11 +267,15 @@ int main(int argc, char** argv) {
 
 	//TEST_ DELETE THIS AFTER. SOME CODE CAN BE USED
 	while (1) {
-		if (requestListener(generator_args->numRequests, &processed_req, fd, &activity_fd) == TRUE)
+		if (requestListener(generator_args->numRequests, &processed_req, fd, &activity_fd, activity_values) == TRUE)
 			break;
 	}
 
 	pthread_join(generatorTID, NULL); /* Wait until thread is finished */
+
+
+	//print the total values of the activity
+	print_generator_activity(activity_values);
 
 	exit(0);
 }

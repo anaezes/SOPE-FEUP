@@ -8,8 +8,8 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "request.h"
 #include <semaphore.h>
+#include "activity.h"
 
 sem_t* sem_sauna;
 
@@ -68,16 +68,16 @@ void* saunaHandler(void* args) {
 
 	printf("Request ID: %d is in sauna\n", newThread->requestThread->rid);
 
-	struct timeval start_time, curr_time;
-	int elapsed;
+	//struct timeval start_time, curr_time;
+	//int elapsed;
 
-	gettimeofday(&start_time, 0);
+	//gettimeofday(&start_time, 0);
 	usleep((newThread->requestThread->time)*1000);
-	gettimeofday(&curr_time, 0);
+	//gettimeofday(&curr_time, 0);
 
-	elapsed = timedifference_msec(start_time, curr_time);
+	//elapsed = timedifference_msec(start_time, curr_time);
 
-	printf("Request ID: %d exited sauna, em %d milliseconds.\n", newThread->requestThread->rid, elapsed);
+	//printf("Request ID: %d exited sauna, em %d milliseconds.\n", newThread->requestThread->rid, elapsed);
 
 	free(args);
 	newThread->freeSeats++;
@@ -100,7 +100,7 @@ void send_confirmation(int* fd) {
 }
 
 //função de processo de decisão
-int requestDecision(request* curr_request, char* gender, int* activity_fd, struct timeval start_time, request_threads* threadsInfo, int* fd){
+int requestDecision(request* curr_request, char* gender, int* activity_fd, struct timeval start_time, request_threads* threadsInfo, int* fd, sauna_activity* activity){
 	
 	struct timeval curr_time;
 	gettimeofday(&curr_time, 0);
@@ -108,6 +108,8 @@ int requestDecision(request* curr_request, char* gender, int* activity_fd, struc
 
 	//write activity
 	strcpy(tip, "RECEBIDO");
+	//increment activity's value, considering the gender and tip
+	incvaluesauna(activity, curr_request->gender, tip);
 	writeActivity(activity_fd, timedifference_msec(start_time, curr_time), curr_request, getpid(), getpid(), tip, 'S');
 	memset(tip,0,strlen(tip));
 
@@ -138,6 +140,8 @@ int requestDecision(request* curr_request, char* gender, int* activity_fd, struc
 		//write activity
 		strcpy(tip, "SERVIDO");
 		gettimeofday(&curr_time, 0);
+		//increment activity's value, considering the gender and tip
+		incvaluesauna(activity, curr_request->gender, tip);
 		writeActivity(activity_fd, timedifference_msec(start_time, curr_time), curr_request, getpid(), (int) new_user_tid, tip, 'S');
 		
 		//update sauna gender
@@ -155,6 +159,8 @@ int requestDecision(request* curr_request, char* gender, int* activity_fd, struc
 		//write activity
 		strcpy(tip, "REJEITADO");
 		gettimeofday(&curr_time, 0);
+		//increment activity's value, considering the gender and tip
+		incvaluesauna(activity, curr_request->gender, tip);
 		writeActivity(activity_fd, timedifference_msec(start_time, curr_time), curr_request, getpid(), getpid(), tip, 'S');
 
 		printf("\n\nRequest ID DENIED: %d\n", curr_request->rid);
@@ -218,6 +224,17 @@ int main (int argc, char** argv) {
 		exit(3);
 	}
 
+
+	//create and initialize activity values
+	sauna_activity* activity_values = (sauna_activity*) malloc(sizeof(sauna_activity));
+	activity_values->male_received = 0;
+	activity_values->female_received = 0;
+	activity_values->male_rejected = 0;
+	activity_values->female_rejected = 0;
+	activity_values->male_attended = 0;
+	activity_values->female_attended = 0;
+
+
 	//struct of threads info
 	request_threads threadsInfo;
 	threadsInfo.nRequests = 0; 
@@ -237,7 +254,7 @@ int main (int argc, char** argv) {
 			break;
 		}
 
-			requestDecision(rReq, &gender, &activity_fd, start_time, &threadsInfo, fd);
+			requestDecision(rReq, &gender, &activity_fd, start_time, &threadsInfo, fd, activity_values);
 			
 	}
 
@@ -246,6 +263,9 @@ int main (int argc, char** argv) {
 		pthread_join(threadsInfo.threads[i], NULL);
 		i++;
 	}
+
+	//print the total values of the activity
+	print_sauna_activity(activity_values);
 
 	exit(0);
 }

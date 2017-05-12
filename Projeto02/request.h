@@ -33,13 +33,7 @@
 
 #define NO_GENDER 'N' /**< @brief Value of sauna's gender when it is empty */
 
-#define GENERATOR_ACTIVITY_FILE "/tmp/ger."
-#define SAUNA_ACTIVITY_FILE "/tmp/bal."
 
-#define OPEN_GENERATOR_FILE 'G'
-#define OPEN_SAUNA_FILE 'S'
-
-#define ACTIVITY_FILE_MODE 0644
 
 /**
  * Struct containing the information about a Request.
@@ -50,6 +44,8 @@ typedef struct request_struct {
     int time;			/**< Time the Request's owner wants to stay in the sauna. */
     int numRejected;	/**< Number of times the Request was rejected. */
 } request;
+
+
 
 
 /**
@@ -104,23 +100,5 @@ void createFifo(const char* currFifo);
 void destroyFifos ();
 
 
-/**
-* Function used to open files to write all the activity of the requests
-* @param file. Variable to know which file should be opened
-* @return Returns a descriptor for the opened file
-*/
-int openActivityFile(char file);
-
-
-/**
-* Function used to write and activity to a activity file
-* @param activity_file. Descriptor of the file where activity should be written
-* @param file. char that represents the type of file to know what shloud be written ('S' - sauna or 'G' - generator)
-* @param curr_request. 
-*/
-void writeActivity(int* activity_file, float inst, request* curr_request, int pid, int tid, char* tip, char file);
-
-
-float timedifference_msec(struct timeval t0, struct timeval t1);
 
 #endif /* __REQUEST_H */
