@@ -59,10 +59,7 @@ int confFifos (int* fd) {
 	return TRUE;
 }
 
-float timedifference_msec(struct timeval t0, struct timeval t1)
-{
-	return (t1.tv_sec - t0.tv_sec) * 1000.0f + (t1.tv_usec - t0.tv_usec) / 1000.0f;
-}
+
 
 //Gerador de multi threads, cada um para cada novo pedido que conté a struct x.
 void* saunaHandler(void* args) {
@@ -103,15 +100,15 @@ void send_confirmation(int* fd) {
 }
 
 //função de processo de decisão
-int requestDecision(request* curr_request, char* gender, int* fd, struct timeval start_time, request_threads* threadsInfo){
+int requestDecision(request* curr_request, char* gender, int* activity_fd, struct timeval start_time, request_threads* threadsInfo, int* fd){
 	
 	struct timeval curr_time;
 	gettimeofday(&curr_time, 0);
-	char tip[9];
+	char tip[10];
 
 	//write activity
 	strcpy(tip, "RECEBIDO");
-	writeActivity(fd, timedifference_msec(start_time, curr_time), curr_request, getpid(), getpid(), tip, 'S');
+	writeActivity(activity_fd, timedifference_msec(start_time, curr_time), curr_request, getpid(), getpid(), tip, 'S');
 	memset(tip,0,strlen(tip));
 
 	if(*gender == NO_GENDER || curr_request->gender == *gender){
@@ -141,13 +138,15 @@ int requestDecision(request* curr_request, char* gender, int* fd, struct timeval
 		//write activity
 		strcpy(tip, "SERVIDO");
 		gettimeofday(&curr_time, 0);
-		writeActivity(fd, timedifference_msec(start_time, curr_time), curr_request, getpid(), pthread_res, tip, 'S');
+		writeActivity(activity_fd, timedifference_msec(start_time, curr_time), curr_request, getpid(), (int) new_user_tid, tip, 'S');
 		
 		//update sauna gender
 		if(threadsInfo->freeSeats == threadsInfo->saunaSpaces)
 			*gender = NO_GENDER;
 		else
 			*gender = curr_request->gender;
+
+		send_confirmation(fd);
 
 		return TRUE;
 	}
@@ -156,7 +155,7 @@ int requestDecision(request* curr_request, char* gender, int* fd, struct timeval
 		//write activity
 		strcpy(tip, "REJEITADO");
 		gettimeofday(&curr_time, 0);
-		writeActivity(fd, timedifference_msec(start_time, curr_time), curr_request, getpid(), getpid(), tip, 'S');
+		writeActivity(activity_fd, timedifference_msec(start_time, curr_time), curr_request, getpid(), getpid(), tip, 'S');
 
 		printf("\n\nRequest ID DENIED: %d\n", curr_request->rid);
 		writeRequest(curr_request, fd);
@@ -237,13 +236,9 @@ int main (int argc, char** argv) {
 				printf("Failed upon closing the fd[EXIT]\n");
 			break;
 		}
-		//Para rejeitar alguns
-		if ((rReq->rid % 4) == 0)
-			writeRequest(rReq, fd);
-		else{
-			requestDecision(rReq, &gender, &activity_fd, start_time, &threadsInfo);
-			send_confirmation(fd);
-		}
+
+			requestDecision(rReq, &gender, &activity_fd, start_time, &threadsInfo, fd);
+			
 	}
 
 	int i = 0; 

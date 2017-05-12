@@ -141,14 +141,20 @@ int openActivityFile(char file){
 }
 
 
-void writeActivity(int* activity_descriptor, int inst, request* curr_request, int pid, int tid, char* tip, char file){
+void writeActivity(int* activity_descriptor, float inst, request* curr_request, int pid, int tid, char* tip, char file){
 
 	FILE* activity_file = fdopen(*activity_descriptor, "wb");
 
 	if(file == OPEN_GENERATOR_FILE)
-		fprintf(activity_file ,"%d - %d - %d: %c - %d - %s\n", inst, pid, curr_request->rid, curr_request->gender, curr_request->time, tip);
+		fprintf(activity_file ,"%-4.2f - %d - %d: %c - %d - %s\n", inst, pid, curr_request->rid, curr_request->gender, curr_request->time, tip);
 	else	
-		fprintf(activity_file ,"%d - %d - %d - %d: %c - %d - %s\n", inst, pid, tid, curr_request->rid, curr_request->gender, curr_request->time, tip);
+		fprintf(activity_file ,"%-4.2f - %d - %d - %d: %c - %d - %s\n", inst, pid, tid, curr_request->rid, curr_request->gender, curr_request->time, tip);
 
 
+}
+
+
+float timedifference_msec(struct timeval t0, struct timeval t1)
+{
+	return (t1.tv_sec - t0.tv_sec) * 1000.0f + (t1.tv_usec - t0.tv_usec) / 1000.0f;
 }

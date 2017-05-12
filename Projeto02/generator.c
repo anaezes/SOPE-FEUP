@@ -1,4 +1,12 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
 #include <pthread.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include "request.h"
 //Other includes are made on request.h
@@ -10,7 +18,11 @@ typedef struct arg_struct {
     int numRequests;		/**< Number of Requests that shall be generated */
     int maxTime;			/**< Maximum Duration time that a Request can have, in miliSeconds. */
     int* fd;				/**< Array containing the File Descriptors for the FIFO's. */
+    int* activity_fd;        /**< File Descriptor for the generator's activity file*/
 } args;
+
+/**< Initial program time */
+struct timeval start_time;
 
 /**
  * Function used to create and set the FIFO's, by directing them accordingly.
@@ -58,6 +70,10 @@ void *generator(void * arguments){
 	args* user_args = (args*) arguments;
 	char genders[] = {'M', 'F'};
 
+	//values to activity file
+	char tip[] = "PEDIDO";
+	struct timeval curr_time;
+
 	//install random seed, based on time
 	time_t t;
 	srand((unsigned) time(&t));
@@ -70,6 +86,8 @@ void *generator(void * arguments){
 
 		//Writing the new request to the other program
 		writeRequest(new_request, user_args->fd);
+		gettimeofday(&curr_time, 0);
+		writeActivity(user_args->activity_fd, timedifference_msec(start_time, curr_time), new_request, getpid(), 0, tip, 'G');
 	}
 
     pthread_exit(NULL);
@@ -87,7 +105,11 @@ void *generator(void * arguments){
  *
  * @return TRUE if the program shoudl end, FALSE otherwise.
  */
-int updateRequest(request* received_req, int generated_req, int* processed_req, int* fd) {
+int updateRequest(request* received_req, int generated_req, int* processed_req, int* fd, int* activity_fd) {
+
+	//values to activity file
+	struct timeval curr_time;
+	char tip[11];
 
 	//If a Request was already rejected 2 times, this means this is the third time.
 	if (received_req->numRejected >= 2) {
@@ -95,16 +117,24 @@ int updateRequest(request* received_req, int generated_req, int* processed_req, 
 		if (((*processed_req)+=1) == generated_req) 
 		{
 			//TODO: gravar na estatistica. Funcao que grava na estatistica depois de recolher info deve destruir o pedido
-
+			
 			//All requests were atended and handled, programs shall finish.
 			if (close(fd[EXIT]) == FALSE)
 				printf("Failed upon closing the fd[EXIT]\n");
 			return TRUE;
 		}
+		strcpy(tip, "DESCARTADO");
+		gettimeofday(&curr_time, 0); // get current time
+		writeActivity(activity_fd, timedifference_msec(start_time, curr_time), received_req, getpid(), 0, tip, 'G');
+		free(received_req);
 	} else {
+
 		//Increment and write again to sauna
 		++(received_req->numRejected);
 		writeRequest(received_req, fd);
+		strcpy(tip, "PEDIDO");
+		gettimeofday(&curr_time, 0);
+		writeActivity(activity_fd,timedifference_msec(start_time, curr_time) , received_req, getpid(), 0, tip, 'G');
 	}
 
 	return FALSE;
@@ -119,8 +149,13 @@ int updateRequest(request* received_req, int generated_req, int* processed_req, 
  *
  * @return TRUE if the program should end, FALSE otherwise.
  */
-int requestListener(int generated_req, int* processed_req, int* fd) {
+int requestListener(int generated_req, int* processed_req, int* fd, int* activity_fd) {
 	request* received_req = readRequest(fd);
+	
+	//values to the activity file
+	struct timeval curr_time;
+	char tip[] = "RECEBIDO";
+
 
 	if (received_req->rid == ACKNOLEDGE_RID) 
 	{
@@ -137,10 +172,15 @@ int requestListener(int generated_req, int* processed_req, int* fd) {
 			return FALSE;
 	}
 	
-	return updateRequest(received_req, generated_req, processed_req, fd);
+
+	gettimeofday(&curr_time, 0);
+	writeActivity(activity_fd, timedifference_msec(start_time, curr_time), received_req, getpid(), 0,tip, 'G');
+
+	return updateRequest(received_req, generated_req, processed_req, fd, activity_fd);
 }
 
 int main(int argc, char** argv) {
+
 
 	//Number of arguments verification
 	if (argc != 3) {
@@ -171,6 +211,9 @@ int main(int argc, char** argv) {
 	//Installing atexitHandler
 	atexit(destroyFifos);
 
+	//Inicialize strat time variable
+	gettimeofday(&start_time, 0);
+
 	//Multi Thread Operations
 	pthread_t generatorTID;
 	int pthread_res;
@@ -178,17 +221,20 @@ int main(int argc, char** argv) {
 	//Value containing the number of already processed requests
 	int processed_req;
 
+
 	//create an args struct to save values to be used in thread creation
 	args* generator_args = (args*) malloc(sizeof(args));
 	generator_args->numRequests = atoi(argv[1]);
 	generator_args->maxTime = atoi(argv[2]);
 	generator_args->fd = fd;
+	generator_args->activity_fd = &activity_fd;
 
 	//SafeGuards
 	if (generator_args->numRequests <= 0 || generator_args->maxTime <= 0) {
 		printf("./generator arguments must be both bigger than 0.\n");
 		exit(1);
 	}
+
 
 	//create thread
 	if((pthread_res = pthread_create(&generatorTID, NULL, &generator, (void *)generator_args)) != TRUE) {
@@ -199,7 +245,7 @@ int main(int argc, char** argv) {
 
 	//TEST_ DELETE THIS AFTER. SOME CODE CAN BE USED
 	while (1) {
-		if (requestListener(generator_args->numRequests, &processed_req, fd) == TRUE)
+		if (requestListener(generator_args->numRequests, &processed_req, fd, &activity_fd) == TRUE)
 			break;
 	}
 

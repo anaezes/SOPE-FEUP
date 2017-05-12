@@ -118,6 +118,9 @@ int openActivityFile(char file);
 * @param file. char that represents the type of file to know what shloud be written ('S' - sauna or 'G' - generator)
 * @param curr_request. 
 */
-void writeActivity(int* activity_file, int inst, request* curr_request, int pid, int tid, char* tip, char file);
+void writeActivity(int* activity_file, float inst, request* curr_request, int pid, int tid, char* tip, char file);
+
+
+float timedifference_msec(struct timeval t0, struct timeval t1);
 
 #endif /* __REQUEST_H */
