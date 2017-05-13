@@ -21,7 +21,10 @@ typedef struct thread_struct{
 } request_threads;
 
 typedef struct thread_args_struct{	
-	request* requestThread;	
+	request* requestThread;
+	struct timeval start_time;	
+	int activity_fd;
+	char* tip;
 	int freeSeats;
 } thread_args;
 
@@ -68,12 +71,15 @@ void* saunaHandler(void* args) {
 
 	printf("Request ID: %d is in sauna\n", newThread->requestThread->rid);
 
-	//struct timeval start_time, curr_time;
+	struct timeval curr_time;
 	//int elapsed;
 
-	//gettimeofday(&start_time, 0);
 	usleep((newThread->requestThread->time)*1000);
-	//gettimeofday(&curr_time, 0);
+
+	//write activity
+	strcpy(newThread->tip, "SERVIDO");
+	gettimeofday(&curr_time, 0);
+	writeActivity(&(newThread->activity_fd), timedifference_msec(newThread->start_time, curr_time), newThread->requestThread, getpid(), (int)pthread_self(), newThread->tip, 'S');
 
 	//elapsed = timedifference_msec(start_time, curr_time);
 
@@ -120,6 +126,9 @@ int requestDecision(request* curr_request, char* gender, int* activity_fd, struc
 		thread_args* threadsArgs = malloc(sizeof(thread_args));
 		threadsArgs->requestThread = curr_request; 
 		threadsArgs->freeSeats = threadsInfo->freeSeats; 
+		threadsArgs->start_time = start_time;
+		threadsArgs->activity_fd = *activity_fd;
+		threadsArgs->tip = tip;
 	
 		//create detached thread
 		pthread_t new_user_tid;
@@ -137,12 +146,9 @@ int requestDecision(request* curr_request, char* gender, int* activity_fd, struc
 		threadsInfo->threads[threadsInfo->nRequests] = new_user_tid;
 		threadsInfo->nRequests++;
 		
-		//write activity
-		strcpy(tip, "SERVIDO");
-		gettimeofday(&curr_time, 0);
 		//increment activity's value, considering the gender and tip
 		incvaluesauna(activity, curr_request->gender, tip);
-		writeActivity(activity_fd, timedifference_msec(start_time, curr_time), curr_request, getpid(), (int) new_user_tid, tip, 'S');
+		
 		
 		//update sauna gender
 		if(threadsInfo->freeSeats == threadsInfo->saunaSpaces)
