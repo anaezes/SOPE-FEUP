@@ -137,6 +137,8 @@ int requestDecision(request* curr_request, char* gender, int* activity_fd, struc
 		pthread_attr_init(&new_user_attr); // get default pthread definitions
 		pthread_attr_setdetachstate(&new_user_attr, PTHREAD_CREATE_JOINABLE);
 
+		strcpy(tip, "SERVIDO");
+
 		if((pthread_res = pthread_create(&new_user_tid, &new_user_attr, &saunaHandler, (void *)threadsArgs)) != TRUE){
 			printf("Error creating generator's thread: %s", strerror(pthread_res));
 			return FALSE;
