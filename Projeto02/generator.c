@@ -25,8 +25,6 @@ typedef struct arg_struct {
 struct timeval start_time;
 
 
-/* mutext used to control activity variables increments*/
-pthread_mutex_t mutex_generator = PTHREAD_MUTEX_INITIALIZER;
 
 /**
  * Function used to create and set the FIFO's, by directing them accordingly.
@@ -94,9 +92,7 @@ void *generator(void * arguments){
 		writeRequest(new_request, user_args->fd);
 		
 		//Updating the Generator's Activity
-		pthread_mutex_lock(&mutex_generator);
 		update_gen_activity(user_args->activity_fd, user_args->activity, new_request, tip, start_time, curr_time);
-		pthread_mutex_unlock(&mutex_generator);
 		/*gettimeofday(&curr_time, 0);
 		inc_generator(user_args->activity, new_request->gender, tip);
 		writeActivity(user_args->activity_fd, time_difference(start_time, curr_time), new_request, getpid(), 0, tip, 'G');*/
@@ -129,9 +125,7 @@ int updateRequest(request* received_req, int generated_req, int* processed_req, 
 		strcpy(tip, "DESCARTADO");
 
 		//Updating the activity and deleting the request
-		pthread_mutex_lock(&mutex_generator);
 		update_gen_activity(activity_fd, activity, received_req, tip, start_time, curr_time);
-		pthread_mutex_unlock(&mutex_generator);
 		deleteRequest(received_req);
 
 		if (((*processed_req)+=1) == generated_req) 
@@ -151,9 +145,7 @@ int updateRequest(request* received_req, int generated_req, int* processed_req, 
 		writeRequest(received_req, fd);
 
 		strcpy(tip, "PEDIDO");
-		pthread_mutex_lock(&mutex_generator);
 		update_gen_activity(activity_fd, activity, received_req, tip, start_time, curr_time);
-		pthread_mutex_unlock(&mutex_generator);
 		/*gettimeofday(&curr_time, 0);
 		inc_generator(activity, received_req->gender, tip);
 		writeActivity(activity_fd,time_difference(start_time, curr_time) , received_req, getpid(), 0, tip, 'G');*/
@@ -193,9 +185,7 @@ int requestListener(int generated_req, int* processed_req, int* fd, int* activit
 			return FALSE;
 	}
 
-	pthread_mutex_lock(&mutex_generator);
 	update_gen_activity(activity_fd, activity, received_req, tip, start_time, curr_time);
-	pthread_mutex_unlock(&mutex_generator);
 	/*gettimeofday(&curr_time, 0);
 	inc_generator(activity, received_req->gender, tip);
 	writeActivity(activity_fd, time_difference(start_time, curr_time), received_req, getpid(), 0,tip, 'G');*/

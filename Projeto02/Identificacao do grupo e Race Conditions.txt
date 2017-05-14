@@ -8,4 +8,4 @@ Luís Noites Martins
 
 Race Condition:
 
-Para evitar a situacao de race condition, aquando do incremento das variáveis para estatistica, foi utilizado um mutex distinto em cada um dos ficheiros. Recorrando as funções pthread_mutex_lock e pthread_mutex_unlock garante-se que mesmo que existam várias threads a correr em simultâneo, em cada instante apenas uma poderá alterar as variáveis que fazem a contagem do número de pedidos gerados, servidos, recebidos, rejeitados e descartados.
+Para evitar a situação de race condition, aquando do incremento das variável que controla o numero de lugares disponíveis na sauna, foi utilizado um mutex no ficheiro sauna.c. Recorrendo as funções pthread_mutex_lock e pthread_mutex_unlock garante-se, assim, que mesmo que existam várias threads a correr em simultâneo, em cada instante apenas uma poderá alterar esta variável que controla o número de pedidos que estão na sauna e se um pedido pode ou não ser atendido.
