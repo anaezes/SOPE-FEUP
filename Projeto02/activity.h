@@ -12,18 +12,16 @@
 #include "request.h"
 
 #define GENERATOR_ACTIVITY_FILE "/tmp/ger."
-#define SAUNA_ACTIVITY_FILE "/tmp/bal."
+#define SAUNA_ACTIVITY_FILE 	"/tmp/bal."
 
-#define OPEN_GENERATOR_FILE 'G'
-#define OPEN_SAUNA_FILE 'S'
+#define OPEN_GENERATOR_FILE		'G'
+#define OPEN_SAUNA_FILE			'S'
 
-#define ACTIVITY_FILE_MODE 0644
-
-
+#define ACTIVITY_FILE_MODE 		0644
 
 /**
-* Struct containing the total values for the generator's activity resume
-*/
+ * Struct containing the total values for the generator's activity resume
+ */
 typedef struct generator_struct
 {
 	int male_generated;
@@ -32,72 +30,82 @@ typedef struct generator_struct
 	int female_rejected;
 	int male_discarded;
 	int female_discarded;
-}generator_activity;
+} generator_activity;
 
 
 /**
-* Struct containing the total values for the sauna's activity resume
-*/
-typedef struct sauna_struct{
-
+ * Struct containing the total values for the sauna's activity resume
+ */
+typedef struct sauna_struct
+{
 	int male_received;
 	int female_received;
 	int male_rejected;
 	int female_rejected;
 	int male_attended;
 	int female_attended;
-}sauna_activity;
+} sauna_activity;
 
 /**
-* Function used to open files to write all the activity of the requests
-* @param file. Variable to know which file should be opened
-* @return Returns a descriptor for the opened file
-*/
+ * Function used to open files to write all the requests' activity.
+ *
+ * @param file. Variable to know which file should be opened
+ *
+ * @return Returns a descriptor for the opened file
+ */
 int openActivityFile(char file);
 
 
 /**
-* Function used to write and activity to a activity file
-* @param activity_file. Descriptor of the file where activity should be written
-* @param inst. program's instant of when activity is written
-* @param curr_request. Request wich activity will be written
-* @param pid. program pid
-* @param tid. thread id or program pid if it's not a thread
-* @param tip. Description of the request for the activity
-* @param file. char that represents the type of file to know what shloud be written ('S' - sauna or 'G' - generator)
-*/
+ * Function used to write and activity to a activity file. (TODO:????????)
+ *
+ * @param activity_file. Descriptor of the file where activity should be written
+ * @param inst. Program's instant of when activity is written
+ * @param curr_request. Request wich activity will be written
+ * @param pid. Program's PID
+ * @param tid. Thread ID or program PID if it's not a thread
+ * @param tip. Description of the request for the activity
+ * @param file. char that represents the type of file to know what should be written ('S' - sauna or 'G' - generator)
+ */
 void writeActivity(int* activity_file, float inst, request* curr_request, int pid, int tid, char* tip, char file);
 
 /*
-* @param t0. Initial time
-* @param t1. Final time 
-* @return Difference between t1 and t0  (in milliseconds)
-*/
-float timedifference_msec(struct timeval t0, struct timeval t1);
+ * Function that returns the time elapsed between two time stamps.
+ *
+ * @param t0. Initial time
+ * @param t1. Final time
+ *
+ * @return Difference between t1 and t0  (in milliseconds)
+ */
+float time_difference(struct timeval t0, struct timeval t1);
 
 /*
-* @param activity. Sauna's activity that is counting the values
-* @param gender. gender of the request to be considered
-* @param tip. Description of the request for the activity
-*/ 
-void incvaluesauna(sauna_activity* activity, char gender, char* tip);
+ * @param activity. Sauna's activity that is counting the values
+ * @param gender. gender of the request to be considered
+ * @param tip. Description of the request for the activity
+ */ 
+void inc_sauna(sauna_activity* activity, char gender, char* tip);
 
 
 /*
-* @param activity. Generator's activity that is counting the values
-* @param gender. gender of the request to be considered
-* @param tip. Description of the request for the activity
-*/ 
-void incvaluegenerator(generator_activity* activity, char gender, char* tip);
+ * @param activity. Generator's activity that is counting the values
+ * @param gender. gender of the request to be considered
+ * @param tip. Description of the request for the activity
+ */ 
+void inc_generator(generator_activity* activity, char gender, char* tip);
 
 /*
-* @param activity. Generator's activity that has the values to print
-*/
+ * Function that prints the Generator's activity
+ *
+ * @param activity. Activity that shall be displayed.
+ */
 void print_generator_activity(generator_activity* activity);
 
 /*
-* @param activity. Sauna's activity that has the values to print
-*/
+ * Function that prints the Sauna's activity
+ *
+ * @param activity. Activity that shall be displayed.
+ */
 void print_sauna_activity(sauna_activity* activity);
 
 #endif /* __ACTIVITY_H */

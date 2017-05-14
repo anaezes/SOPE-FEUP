@@ -9,9 +9,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "activity.h"
-//Other includes are made on request.h
-
-
 
 /**
  * Struct containing the args the program runs with.
@@ -62,7 +59,6 @@ int confFifos (int* fd) {
 }
 
 
-
 /**
  * Function responsible for generating random Threads, according to the given argument.
  *
@@ -90,9 +86,11 @@ void *generator(void * arguments){
 
 		//Writing the new request to the other program
 		writeRequest(new_request, user_args->fd);
+		
 		gettimeofday(&curr_time, 0);
-		incvaluegenerator(user_args->activity, new_request->gender, tip);
-		writeActivity(user_args->activity_fd, timedifference_msec(start_time, curr_time), new_request, getpid(), 0, tip, 'G');
+		inc_generator(user_args->activity, new_request->gender, tip);
+		
+		writeActivity(user_args->activity_fd, time_difference(start_time, curr_time), new_request, getpid(), 0, tip, 'G');
 	}
 
     pthread_exit(NULL);
@@ -108,11 +106,11 @@ void *generator(void * arguments){
  * @param processed_req. Number of requests that were already concluded.
  * @param fd. Array containing the File Descriptors for the FIFO's
  *
- * @return TRUE if the program shoudl end, FALSE otherwise.
+ * @return TRUE if the program should end, FALSE otherwise.
  */
 int updateRequest(request* received_req, int generated_req, int* processed_req, int* fd, int* activity_fd, generator_activity* activity) {
 
-	//values to activity file
+	//Values for activity file
 	struct timeval curr_time;
 	char tip[11];
 
@@ -128,20 +126,24 @@ int updateRequest(request* received_req, int generated_req, int* processed_req, 
 				printf("Failed upon closing the fd[EXIT]\n");
 			return TRUE;
 		}
+
 		strcpy(tip, "DESCARTADO");
+
+		//TODO: Criar função para estas 3 linhas. Repetem-se pelo menos 3x
 		gettimeofday(&curr_time, 0); // get current time
-		incvaluegenerator(activity, received_req->gender, tip);
-		writeActivity(activity_fd, timedifference_msec(start_time, curr_time), received_req, getpid(), 0, tip, 'G');
+		inc_generator(activity, received_req->gender, tip);
+		writeActivity(activity_fd, time_difference(start_time, curr_time), received_req, getpid(), 0, tip, 'G');
 		free(received_req);
 	} else {
 
 		//Increment and write again to sauna
 		++(received_req->numRejected);
 		writeRequest(received_req, fd);
+
 		strcpy(tip, "PEDIDO");
 		gettimeofday(&curr_time, 0);
-		incvaluegenerator(activity, received_req->gender, tip);
-		writeActivity(activity_fd,timedifference_msec(start_time, curr_time) , received_req, getpid(), 0, tip, 'G');
+		inc_generator(activity, received_req->gender, tip);
+		writeActivity(activity_fd,time_difference(start_time, curr_time) , received_req, getpid(), 0, tip, 'G');
 	}
 
 	return FALSE;
@@ -178,19 +180,16 @@ int requestListener(int generated_req, int* processed_req, int* fd, int* activit
 		} else
 			return FALSE;
 	}
-	
 
 	gettimeofday(&curr_time, 0);
-	incvaluegenerator(activity, received_req->gender, tip);
-	writeActivity(activity_fd, timedifference_msec(start_time, curr_time), received_req, getpid(), 0,tip, 'G');
+	inc_generator(activity, received_req->gender, tip);
+	writeActivity(activity_fd, time_difference(start_time, curr_time), received_req, getpid(), 0,tip, 'G');
 
 	return updateRequest(received_req, generated_req, processed_req, fd, activity_fd, activity);
 }
 
-int main(int argc, char** argv) {
-
-
-
+int main(int argc, char** argv)
+{
 	//Number of arguments verification
 	if (argc != 3) {
 		printf("Usage: ./generator <number of Requests> <máx Time for each Request>\n");
@@ -207,8 +206,7 @@ int main(int argc, char** argv) {
 		printf("Successfuly established connection to sauna.c.\n\n");
 
 
-	//open activity file
-
+	//Open activity file
 	int activity_fd;
 	
 	if((activity_fd = openActivityFile('G')) == FALSE){
@@ -217,12 +215,12 @@ int main(int argc, char** argv) {
 	}else
 		printf("Generator's activity file was successfuly opened.\n\n");	
 
+
 	//Installing atexitHandler
 	atexit(destroyFifos);
 
-	//Inicialize strat time variable
+	//Initialize start time variable
 	gettimeofday(&start_time, 0);
-
 
 	//Multi Thread Operations
 	pthread_t generatorTID;
@@ -231,9 +229,7 @@ int main(int argc, char** argv) {
 	//Value containing the number of already processed requests
 	int processed_req;
 
-
-
-	//create and initialize activity values
+	//Create and initialize activity values TODO: Função init para isto.
 	generator_activity* activity_values = (generator_activity*) malloc(sizeof(generator_activity));
 	activity_values->male_generated = 0;
 	activity_values->female_generated = 0;
@@ -242,8 +238,7 @@ int main(int argc, char** argv) {
 	activity_values->male_discarded = 0;
 	activity_values->female_discarded = 0;
 
-
-	//create an args struct to save values to be used in thread creation
+	//Create an args struct to save values to be used in thread creation
 	args* generator_args = (args*) malloc(sizeof(args));
 	generator_args->numRequests = atoi(argv[1]);
 	generator_args->maxTime = atoi(argv[2]);
@@ -257,24 +252,21 @@ int main(int argc, char** argv) {
 		exit(1);
 	}
 
-
-	//create thread
+	//Create thread
 	if((pthread_res = pthread_create(&generatorTID, NULL, &generator, (void *)generator_args)) != TRUE) {
 		printf("Error creating generator's thread: %s", strerror(pthread_res));
 	}
 
-	//Request Listener & Finish Process Decision
-
-	//TEST_ DELETE THIS AFTER. SOME CODE CAN BE USED
+	//This cycle only finishes when the number of processed requests is equal to the number of generated requests.
 	while (1) {
 		if (requestListener(generator_args->numRequests, &processed_req, fd, &activity_fd, activity_values) == TRUE)
 			break;
 	}
 
-	pthread_join(generatorTID, NULL); /* Wait until thread is finished */
+	pthread_join(generatorTID, NULL); /* Wait until the other thread is finished */
 
 
-	//print the total values of the activity
+	//Print the total values of the activity
 	print_generator_activity(activity_values);
 
 	exit(0);

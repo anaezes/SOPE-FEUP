@@ -76,8 +76,6 @@ request* readRequest(int* fd) {
 void writeRequest(request* new_request, int* fd) {
 	printf("WRITE: It: %d  , time: %d   ,   gender: %c\n", new_request->rid, new_request->time, new_request->gender); //TODO: Delete this printf -> test purpose only
 
-	//TODO: Review this code. Do it more efficiently ??? Nao me lembrei de nada melhor na altura.
-
 	//Filling the Write Buffer
 	char reqBuffer[MAX_REQ_LEN];
 	char extractor[6];

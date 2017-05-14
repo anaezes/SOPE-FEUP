@@ -1,6 +1,6 @@
 #include "activity.h"
 
-int openActivityFile(char file){
+int openActivityFile(char file) {
 
 	//create full path
 	const char* activity_file;
@@ -11,7 +11,7 @@ int openActivityFile(char file){
 	else
 		activity_file = SAUNA_ACTIVITY_FILE;
 
-	sprintf(finalpath, "%s%d", activity_file,getpid());
+	sprintf(finalpath, "%s%d", activity_file, getpid());
 
 	int activity_fd;
 
@@ -22,7 +22,7 @@ int openActivityFile(char file){
 }
 
 
-void writeActivity(int* activity_descriptor, float inst, request* curr_request, int pid, int tid, char* tip, char file){
+void writeActivity(int* activity_descriptor, float inst, request* curr_request, int pid, int tid, char* tip, char file) {
 
 	FILE* activity_file = fdopen(*activity_descriptor, "wb");
 
@@ -35,13 +35,13 @@ void writeActivity(int* activity_descriptor, float inst, request* curr_request, 
 }
 
 
-float timedifference_msec(struct timeval t0, struct timeval t1)
+float time_difference(struct timeval t0, struct timeval t1)
 {
 	return (t1.tv_sec - t0.tv_sec) * 1000.0f + (t1.tv_usec - t0.tv_usec) / 1000.0f;
 }
 
 
-void incvaluesauna(sauna_activity* activity, char gender, char* tip){
+void inc_sauna(sauna_activity* activity, char gender, char* tip) {
 
 	if(strcmp(tip, "RECEBIDO") == 0){
 
@@ -49,16 +49,16 @@ void incvaluesauna(sauna_activity* activity, char gender, char* tip){
 			(activity->male_received)++;
 		else
 			(activity->female_received)++;
-
 	}
+
 	else if(strcmp(tip, "REJEITADO") == 0){
 
 		if(gender == 'M')
 			(activity->male_rejected)++;
 		else
 			(activity->female_rejected)++;
-
 	}
+
 	else if(strcmp(tip, "SERVIDO") == 0){
 
 
@@ -71,25 +71,25 @@ void incvaluesauna(sauna_activity* activity, char gender, char* tip){
 
 
 
-void incvaluegenerator(generator_activity* activity, char gender, char* tip){
+void inc_generator(generator_activity* activity, char gender, char* tip) {
 
-	if(strcmp(tip, "PEDIDO") == 0){
+	if(strcmp(tip, "PEDIDO") == 0) {
 
 		if(gender == 'M')
 			(activity->male_generated)++;
 		else
 			(activity->female_generated)++;
-
 	}
-	else if(strcmp(tip, "REJEITADO") == 0){
+
+	else if(strcmp(tip, "REJEITADO") == 0) {
 
 		if(gender == 'M')
 			(activity->male_rejected)++;
 		else
 			(activity->female_rejected)++;
-
 	}
-	else if(strcmp(tip, "DESCARTADO") == 0){
+
+	else if(strcmp(tip, "DESCARTADO") == 0) {
 
 		if(gender == 'M')
 			(activity->male_discarded)++;
@@ -100,7 +100,6 @@ void incvaluegenerator(generator_activity* activity, char gender, char* tip){
 
 
 void print_generator_activity(generator_activity* activity){
-
 	printf("GERADOS:\n");
 	printf("HOMENS: %d,  MULHERES: %d,  TOTAL: %d\n\n", activity->male_generated, activity->female_generated, (activity->male_generated+activity->female_generated));
 
@@ -109,13 +108,9 @@ void print_generator_activity(generator_activity* activity){
 
 	printf("DESCARTADOS:\n");
 	printf("HOMENS: %d,  MULHERES: %d,  TOTAL: %d\n\n", activity->male_discarded, activity->female_discarded, (activity->male_discarded+activity->female_discarded));
-
-
-
 }
 
-void print_sauna_activity(sauna_activity* activity){
-
+void print_sauna_activity(sauna_activity* activity) {
 	printf("RECEBIDOS:\n");
 	printf("HOMENS: %d,  MULHERES: %d,  TOTAL: %d\n\n", activity->male_received, activity->female_received, (activity->male_received+activity->female_received));
 
@@ -124,5 +119,4 @@ void print_sauna_activity(sauna_activity* activity){
 
 	printf("SERVIDOS:\n");
 	printf("HOMENS: %d,  MULHERES: %d,  TOTAL: %d\n\n", activity->male_attended, activity->female_attended, (activity->male_attended+activity->female_attended));
-
 }
