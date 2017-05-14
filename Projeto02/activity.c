@@ -76,9 +76,9 @@ void inc_generator(generator_activity* activity, char gender, char* tip) {
 	if(strcmp(tip, "PEDIDO") == 0) {
 
 		if(gender == 'M')
-			(activity->male_generated)++;
+			(activity->male_sent)++;
 		else
-			(activity->female_generated)++;
+			(activity->female_sent)++;
 	}
 
 	else if(strcmp(tip, "REJEITADO") == 0) {
@@ -100,23 +100,26 @@ void inc_generator(generator_activity* activity, char gender, char* tip) {
 
 
 void print_generator_activity(generator_activity* activity){
-	printf("GERADOS:\n");
-	printf("HOMENS: %d,  MULHERES: %d,  TOTAL: %d\n\n", activity->male_generated, activity->female_generated, (activity->male_generated+activity->female_generated));
+	printf("\nGERADOS:\n");
+	printf("HOMENS: %*d,  MULHERES: %*d,  TOTAL: %*d\n\n", 4, activity->male_generated, 4, activity->female_generated, 5, (activity->male_generated+activity->female_generated));
+
+	printf("ENVIADOS:\n");
+	printf("HOMENS: %*d,  MULHERES: %*d,  TOTAL: %*d\n\n", 4, activity->male_sent, 4, activity->female_sent, 5, (activity->male_sent+activity->female_sent));
 
 	printf("REJEITADOS:\n");
-	printf("HOMENS: %d,  MULHERES: %d,  TOTAL: %d\n\n", activity->male_rejected, activity->female_rejected, (activity->male_rejected+activity->female_rejected));
+	printf("HOMENS: %*d,  MULHERES: %*d,  TOTAL: %*d\n\n", 4, activity->male_rejected, 4, activity->female_rejected, 5, (activity->male_rejected+activity->female_rejected));
 
 	printf("DESCARTADOS:\n");
-	printf("HOMENS: %d,  MULHERES: %d,  TOTAL: %d\n\n", activity->male_discarded, activity->female_discarded, (activity->male_discarded+activity->female_discarded));
+	printf("HOMENS: %*d,  MULHERES: %*d,  TOTAL: %*d\n\n", 4, activity->male_discarded, 4, activity->female_discarded, 5, (activity->male_discarded+activity->female_discarded));
 }
 
 void print_sauna_activity(sauna_activity* activity) {
-	printf("RECEBIDOS:\n");
-	printf("HOMENS: %d,  MULHERES: %d,  TOTAL: %d\n\n", activity->male_received, activity->female_received, (activity->male_received+activity->female_received));
+	printf("\nRECEBIDOS\n");
+	printf("HOMENS: %*d,  MULHERES: %*d,  TOTAL: %*d\n\n", 4, activity->male_received, 4, activity->female_received, 5, (activity->male_received+activity->female_received));
 
 	printf("REJEITADOS:\n");
-	printf("HOMENS: %d,  MULHERES: %d,  TOTAL: %d\n\n", activity->male_rejected, activity->female_rejected, (activity->male_rejected+activity->female_rejected));
+	printf("HOMENS: %*d,  MULHERES: %*d,  TOTAL: %*d\n\n", 4, activity->male_rejected, 4, activity->female_rejected, 5, (activity->male_rejected+activity->female_rejected));
 
 	printf("SERVIDOS:\n");
-	printf("HOMENS: %d,  MULHERES: %d,  TOTAL: %d\n\n", activity->male_attended, activity->female_attended, (activity->male_attended+activity->female_attended));
+	printf("HOMENS: %*d,  MULHERES: %*d,  TOTAL: %*d\n\n", 4, activity->male_attended, 4, activity->female_attended, 5, (activity->male_attended+activity->female_attended));
 }

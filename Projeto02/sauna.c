@@ -221,6 +221,7 @@ int main (int argc, char** argv) {
 	struct timeval start_time;
 	gettimeofday(&start_time, 0);
 
+
 	//Ensure that the semaph does not exist
 	sem_unlink("/sem_sauna");
 	sem_sauna = sem_open("/sem_sauna", O_CREAT, SEMAPHORE_MODE, saunaSpaces);

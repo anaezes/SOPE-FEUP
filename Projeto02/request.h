@@ -14,8 +14,8 @@
  */
 
 /* MACROS */
-#define EXIT 	0
-#define ENTRY 	1
+#define EXIT 			0
+#define ENTRY 			1
 
 #define FIFO_ENTRADA	"/tmp/entrada"
 #define FIFO_REJEITADOS	"/tmp/rejeitados"
@@ -23,15 +23,15 @@
 #define FIFO_MODE		0660	/**< @brief Mode used on FIFO creation - function mkfifo(). */
 #define SEMAPHORE_MODE	0644	/**< @brief Mode used on Semaphore creation. */
 
-#define TRUE 		0			/**< @brief Used to simulate the true value of a boolean. */
-#define FALSE 		-1			/**< @brief Used to simulate the false value of a boolean. */
+#define TRUE 			0		/**< @brief Used to simulate the true value of a boolean. */
+#define FALSE 			-1		/**< @brief Used to simulate the false value of a boolean. */
 
-#define MAX_REQ_LEN	50			/**< @brief Maximum Lenght of the string representation of a Request. */
+#define MAX_REQ_LEN		50		/**< @brief Maximum Lenght of the string representation of a Request. */
 
 #define FIFO_CLOSED		-1		/**< @brief Value of the RID of the read request, meaning the FIFO was closed on the other end. */
 #define ACKNOLEDGE_RID	-2		/**< @brief Value of the RID of a sent request, meaning another request was successfuly processed. */
 
-#define NO_GENDER 'N' 			/**< @brief Value of sauna's gender when it is empty */
+#define NO_GENDER 		'N'		/**< @brief Value of sauna's gender when it is empty */
 
 
 
@@ -44,9 +44,6 @@ typedef struct request_struct {
     int time;			/**< Time the Request's owner wants to stay in the sauna. */
     int numRejected;	/**< Number of times the Request was rejected. */
 } request;
-
-
-
 
 /**
  * Request Constructor.

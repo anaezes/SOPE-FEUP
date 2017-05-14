@@ -231,12 +231,14 @@ int main(int argc, char** argv)
 
 	//Create and initialize activity values TODO: Função init para isto.
 	generator_activity* activity_values = (generator_activity*) malloc(sizeof(generator_activity));
-	activity_values->male_generated = 0;
-	activity_values->female_generated = 0;
-	activity_values->male_rejected = 0;
-	activity_values->female_rejected = 0;
-	activity_values->male_discarded = 0;
-	activity_values->female_discarded = 0;
+	activity_values->male_generated 	= 0;
+	activity_values->female_generated 	= 0;
+	activity_values->male_sent			= 0;
+	activity_values->female_sent 		= 0;
+	activity_values->male_rejected 		= 0;
+	activity_values->female_rejected 	= 0;
+	activity_values->male_discarded 	= 0;
+	activity_values->female_discarded 	= 0;
 
 	//Create an args struct to save values to be used in thread creation
 	args* generator_args = (args*) malloc(sizeof(args));

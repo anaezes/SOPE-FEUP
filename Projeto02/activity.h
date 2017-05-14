@@ -26,6 +26,8 @@ typedef struct generator_struct
 {
 	int male_generated;
 	int female_generated;
+	int male_sent;
+	int female_sent;
 	int male_rejected;
 	int female_rejected;
 	int male_discarded;
