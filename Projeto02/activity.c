@@ -15,12 +15,11 @@ int openActivityFile(char file) {
 
 	int activity_fd;
 
-	activity_fd = open(finalpath, O_WRONLY| O_CREAT, ACTIVITY_FILE_MODE);
+	activity_fd = open(finalpath, (O_WRONLY| O_CREAT), ACTIVITY_FILE_MODE);
 	printf("PID: %d", getpid());
 
 	return activity_fd;
 }
-
 
 void writeActivity(int* activity_descriptor, float inst, request* curr_request, int pid, int tid, char* tip, char file) {
 
@@ -30,16 +29,39 @@ void writeActivity(int* activity_descriptor, float inst, request* curr_request, 
 		fprintf(activity_file ,"%-4.2f - %d - %d: %c - %d - %s\n", inst, pid, curr_request->rid, curr_request->gender, curr_request->time, tip);
 	else	
 		fprintf(activity_file ,"%-4.2f - %d - %d - %d: %c - %d - %s\n", inst, pid, tid, curr_request->rid, curr_request->gender, curr_request->time, tip);
-
-
 }
 
-
-float time_difference(struct timeval t0, struct timeval t1)
-{
+float time_difference(struct timeval t0, struct timeval t1) {
 	return (t1.tv_sec - t0.tv_sec) * 1000.0f + (t1.tv_usec - t0.tv_usec) / 1000.0f;
 }
 
+generator_activity* init_gen_activity() {
+	generator_activity* activity_values = (generator_activity*) malloc(sizeof(generator_activity));
+	
+	activity_values->male_generated 	= 0;
+	activity_values->female_generated 	= 0;
+	activity_values->male_sent			= 0;
+	activity_values->female_sent 		= 0;
+	activity_values->male_rejected 		= 0;
+	activity_values->female_rejected 	= 0;
+	activity_values->male_discarded 	= 0;
+	activity_values->female_discarded 	= 0;
+
+	return activity_values;
+}
+
+sauna_activity* init_sauna_acitivity() {
+	sauna_activity* activity_values = (sauna_activity*) malloc(sizeof(sauna_activity));
+	
+	activity_values->male_received 		= 0;
+	activity_values->female_received 	= 0;
+	activity_values->male_rejected		= 0;
+	activity_values->female_rejected	= 0;
+	activity_values->male_attended		= 0;
+	activity_values->female_attended	= 0;
+
+	return activity_values;
+}
 
 void inc_sauna(sauna_activity* activity, char gender, char* tip) {
 
@@ -61,15 +83,12 @@ void inc_sauna(sauna_activity* activity, char gender, char* tip) {
 
 	else if(strcmp(tip, "SERVIDO") == 0){
 
-
 		if(gender == 'M')
 			(activity->male_attended)++;
 		else
 			(activity->female_attended)++;
 	}
 }
-
-
 
 void inc_generator(generator_activity* activity, char gender, char* tip) {
 
@@ -98,9 +117,8 @@ void inc_generator(generator_activity* activity, char gender, char* tip) {
 	}
 }
 
-
 void print_generator_activity(generator_activity* activity){
-	printf("\nGERADOS:\n");
+	printf("\nGERADOS:\n");	//TODO: Gerados tem de ser igual ao numero de pedidos? Rever this.
 	printf("HOMENS: %*d,  MULHERES: %*d,  TOTAL: %*d\n\n", 4, activity->male_generated, 4, activity->female_generated, 5, (activity->male_generated+activity->female_generated));
 
 	printf("ENVIADOS:\n");

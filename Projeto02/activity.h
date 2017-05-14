@@ -81,6 +81,20 @@ void writeActivity(int* activity_file, float inst, request* curr_request, int pi
  */
 float time_difference(struct timeval t0, struct timeval t1);
 
+/**
+ * Function used to initialize Generator's variables used to record its activity.
+ *
+ * @return Pointer to the struct containing the generator's activity variables.
+ */
+generator_activity* init_gen_activity();
+
+/**
+ * Function used to initialize Sauna's variables used to record its activity.
+ *
+ * @return Pointer to the struct containing the sauna's activity variables.
+ */
+sauna_activity* init_sauna_activity();
+
 /*
  * @param activity. Sauna's activity that is counting the values
  * @param gender. gender of the request to be considered

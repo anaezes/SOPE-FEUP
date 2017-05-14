@@ -226,20 +226,12 @@ int main (int argc, char** argv) {
 	sem_unlink("/sem_sauna");
 	sem_sauna = sem_open("/sem_sauna", O_CREAT, SEMAPHORE_MODE, saunaSpaces);
 	if(sem_sauna == SEM_FAILED) {
-		perror("Error to create semaphore for sauna.");
+		perror("Error creating semaphore for sauna.\n");
 		exit(3);
 	}
 
-
 	//create and initialize activity values
-	sauna_activity* activity_values = (sauna_activity*) malloc(sizeof(sauna_activity));
-	activity_values->male_received = 0;
-	activity_values->female_received = 0;
-	activity_values->male_rejected = 0;
-	activity_values->female_rejected = 0;
-	activity_values->male_attended = 0;
-	activity_values->female_attended = 0;
-
+	sauna_activity* activity_values = init_sauna_acitivity();
 
 	//struct of threads info
 	request_threads threadsInfo;

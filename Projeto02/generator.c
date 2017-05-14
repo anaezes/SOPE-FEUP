@@ -165,7 +165,6 @@ int requestListener(int generated_req, int* processed_req, int* fd, int* activit
 	struct timeval curr_time;
 	char tip[] = "REJEITADO";
 
-
 	if (received_req->rid == ACKNOLEDGE_RID) 
 	{
 		deleteRequest(received_req);
@@ -229,16 +228,8 @@ int main(int argc, char** argv)
 	//Value containing the number of already processed requests
 	int processed_req;
 
-	//Create and initialize activity values TODO: Função init para isto.
-	generator_activity* activity_values = (generator_activity*) malloc(sizeof(generator_activity));
-	activity_values->male_generated 	= 0;
-	activity_values->female_generated 	= 0;
-	activity_values->male_sent			= 0;
-	activity_values->female_sent 		= 0;
-	activity_values->male_rejected 		= 0;
-	activity_values->female_rejected 	= 0;
-	activity_values->male_discarded 	= 0;
-	activity_values->female_discarded 	= 0;
+	//Create and initialize activity values
+	generator_activity* activity_values = init_gen_activity();
 
 	//Create an args struct to save values to be used in thread creation
 	args* generator_args = (args*) malloc(sizeof(args));
@@ -266,7 +257,6 @@ int main(int argc, char** argv)
 	}
 
 	pthread_join(generatorTID, NULL); /* Wait until the other thread is finished */
-
 
 	//Print the total values of the activity
 	print_generator_activity(activity_values);
