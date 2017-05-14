@@ -7,6 +7,7 @@
 #include <string.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "request.h"
@@ -95,13 +96,24 @@ generator_activity* init_gen_activity();
  */
 sauna_activity* init_sauna_activity();
 
+/**
+ * Function used to update the Generator's Activity.
+ *
+ * @param activity_file. Descriptor of the file where activity should be written
+ * @param activity. Generator's activity Struct.
+ * @param curr_request. Request to update the activity with.
+ * @param tip. Description of the request for the activity
+ * @param start_time. Initial time, when the program started
+ * @param curr_time. Current time.
+ */
+void update_gen_activity(int *activity_file, generator_activity* activity, request* curr_request, char* tip, struct timeval start_time, struct timeval curr_time);
+
 /*
  * @param activity. Sauna's activity that is counting the values
  * @param gender. gender of the request to be considered
  * @param tip. Description of the request for the activity
  */ 
 void inc_sauna(sauna_activity* activity, char gender, char* tip);
-
 
 /*
  * @param activity. Generator's activity that is counting the values

@@ -58,7 +58,6 @@ int confFifos (int* fd) {
 	return TRUE;
 }
 
-
 /**
  * Function responsible for generating random Threads, according to the given argument.
  *
@@ -87,10 +86,11 @@ void *generator(void * arguments){
 		//Writing the new request to the other program
 		writeRequest(new_request, user_args->fd);
 		
-		gettimeofday(&curr_time, 0);
+		//Updating the Generator's Activity
+		update_gen_activity(user_args->activity_fd, user_args->activity, new_request, tip, start_time, curr_time);
+		/*gettimeofday(&curr_time, 0);
 		inc_generator(user_args->activity, new_request->gender, tip);
-		
-		writeActivity(user_args->activity_fd, time_difference(start_time, curr_time), new_request, getpid(), 0, tip, 'G');
+		writeActivity(user_args->activity_fd, time_difference(start_time, curr_time), new_request, getpid(), 0, tip, 'G');*/
 	}
 
     pthread_exit(NULL);
@@ -117,23 +117,22 @@ int updateRequest(request* received_req, int generated_req, int* processed_req, 
 	//If a Request was already rejected 2 times, this means this is the third time.
 	if (received_req->numRejected >= 2) {
 
+		strcpy(tip, "DESCARTADO");
+
+		//Updating the activity and deleting the request
+		update_gen_activity(activity_fd, activity, received_req, tip, start_time, curr_time);
+		deleteRequest(received_req);
+
 		if (((*processed_req)+=1) == generated_req) 
-		{
-			//TODO: gravar na estatistica. Funcao que grava na estatistica depois de recolher info deve destruir o pedido
-			
+		{	
 			//All requests were atended and handled, programs shall finish.
 			if (close(fd[EXIT]) == FALSE)
 				printf("Failed upon closing the fd[EXIT]\n");
 			return TRUE;
 		}
-
-		strcpy(tip, "DESCARTADO");
-
-		//TODO: Criar função para estas 3 linhas. Repetem-se pelo menos 3x
-		gettimeofday(&curr_time, 0); // get current time
+		/*gettimeofday(&curr_time, 0); // get current time
 		inc_generator(activity, received_req->gender, tip);
-		writeActivity(activity_fd, time_difference(start_time, curr_time), received_req, getpid(), 0, tip, 'G');
-		free(received_req);
+		writeActivity(activity_fd, time_difference(start_time, curr_time), received_req, getpid(), 0, tip, 'G');*/
 	} else {
 
 		//Increment and write again to sauna
@@ -141,9 +140,10 @@ int updateRequest(request* received_req, int generated_req, int* processed_req, 
 		writeRequest(received_req, fd);
 
 		strcpy(tip, "PEDIDO");
-		gettimeofday(&curr_time, 0);
+		update_gen_activity(activity_fd, activity, received_req, tip, start_time, curr_time);
+		/*gettimeofday(&curr_time, 0);
 		inc_generator(activity, received_req->gender, tip);
-		writeActivity(activity_fd,time_difference(start_time, curr_time) , received_req, getpid(), 0, tip, 'G');
+		writeActivity(activity_fd,time_difference(start_time, curr_time) , received_req, getpid(), 0, tip, 'G');*/
 	}
 
 	return FALSE;
@@ -180,9 +180,10 @@ int requestListener(int generated_req, int* processed_req, int* fd, int* activit
 			return FALSE;
 	}
 
-	gettimeofday(&curr_time, 0);
+	update_gen_activity(activity_fd, activity, received_req, tip, start_time, curr_time);
+	/*gettimeofday(&curr_time, 0);
 	inc_generator(activity, received_req->gender, tip);
-	writeActivity(activity_fd, time_difference(start_time, curr_time), received_req, getpid(), 0,tip, 'G');
+	writeActivity(activity_fd, time_difference(start_time, curr_time), received_req, getpid(), 0,tip, 'G');*/
 
 	return updateRequest(received_req, generated_req, processed_req, fd, activity_fd, activity);
 }

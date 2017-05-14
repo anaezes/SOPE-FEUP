@@ -25,10 +25,10 @@ void writeActivity(int* activity_descriptor, float inst, request* curr_request, 
 
 	FILE* activity_file = fdopen(*activity_descriptor, "wb");
 
-	if(file == OPEN_GENERATOR_FILE)
-		fprintf(activity_file ,"%-4.2f - %d - %d: %c - %d - %s\n", inst, pid, curr_request->rid, curr_request->gender, curr_request->time, tip);
+	if(file == OPEN_GENERATOR_FILE)	//TODO: SetW do inst
+		fprintf(activity_file ,"%-4.2f - %d - %*d: %c - %*d - %*s\n", inst, pid, 4, curr_request->rid, curr_request->gender, 3, curr_request->time, 10, tip);
 	else	
-		fprintf(activity_file ,"%-4.2f - %d - %d - %d: %c - %d - %s\n", inst, pid, tid, curr_request->rid, curr_request->gender, curr_request->time, tip);
+		fprintf(activity_file ,"%-4.2f - %d - %d - %*d: %c - %*d - %*s\n", inst, pid, tid, 4, curr_request->rid, curr_request->gender, 3, curr_request->time, 9, tip);
 }
 
 float time_difference(struct timeval t0, struct timeval t1) {
@@ -50,7 +50,7 @@ generator_activity* init_gen_activity() {
 	return activity_values;
 }
 
-sauna_activity* init_sauna_acitivity() {
+sauna_activity* init_sauna_activity() {
 	sauna_activity* activity_values = (sauna_activity*) malloc(sizeof(sauna_activity));
 	
 	activity_values->male_received 		= 0;
@@ -61,6 +61,12 @@ sauna_activity* init_sauna_acitivity() {
 	activity_values->female_attended	= 0;
 
 	return activity_values;
+}
+
+void update_gen_activity(int *activity_file, generator_activity* activity, request* curr_request, char* tip, struct timeval start_time, struct timeval curr_time) {
+	gettimeofday(&curr_time, 0); // get current time
+	inc_generator(activity, curr_request->gender, tip);
+	writeActivity(activity_file, time_difference(start_time, curr_time), curr_request, getpid(), 0, tip, 'G');
 }
 
 void inc_sauna(sauna_activity* activity, char gender, char* tip) {

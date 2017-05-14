@@ -62,8 +62,6 @@ int confFifos (int* fd) {
 	return TRUE;
 }
 
-
-
 //Gerador de multi threads, cada um para cada novo pedido que conté a struct x.
 void* saunaHandler(void* args) {
 	sem_wait(sem_sauna);
@@ -79,6 +77,7 @@ void* saunaHandler(void* args) {
 	//write activity
 	strcpy(newThread->tip, "SERVIDO");
 	gettimeofday(&curr_time, 0);
+	//TODO: AQUI nao ha incremento???
 	writeActivity(&(newThread->activity_fd), time_difference(newThread->start_time, curr_time), newThread->requestThread, getpid(), (int)pthread_self(), newThread->tip, 'S');
 
 	//elapsed = time_difference(start_time, curr_time);
@@ -105,8 +104,11 @@ void send_confirmation(int* fd) {
 	writeRequest(ack_request, fd);
 }
 
-//função de processo de decisão
-int requestDecision(request* curr_request, char* gender, int* activity_fd, struct timeval start_time, request_threads* threadsInfo, int* fd, sauna_activity* activity){
+/**
+ * Function that decides what shall be done with a received request.
+ * Updates Activity with the received request as well.
+ */ 
+int requestDecision(request* curr_request, char* gender, int* activity_fd, struct timeval start_time, request_threads* threadsInfo, int* fd, sauna_activity* activity) {
 	
 	struct timeval curr_time;
 	gettimeofday(&curr_time, 0);
@@ -233,7 +235,7 @@ int main (int argc, char** argv) {
 	}
 
 	//create and initialize activity values
-	sauna_activity* activity_values = init_sauna_acitivity();
+	sauna_activity* activity_values = init_sauna_activity();
 
 	//struct of threads info
 	request_threads threadsInfo;
