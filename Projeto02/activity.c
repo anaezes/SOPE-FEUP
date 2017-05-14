@@ -25,9 +25,9 @@ void writeActivity(int* activity_descriptor, float inst, request* curr_request, 
 	FILE* activity_file = fdopen(*activity_descriptor, "wb");
 
 	if(file == OPEN_GENERATOR_FILE)
-		fprintf(activity_file ,"%-4.2f - %d - %*d: %c - %*d - %*s\n", inst, pid, 4, curr_request->rid, curr_request->gender, 3, curr_request->time, 10, tip);
+		fprintf(activity_file ,"%-6.2f - %d - %*d: %c - %*d - %*s\n", inst, pid, 4, curr_request->rid, curr_request->gender, 3, curr_request->time, 10, tip);
 	else	
-		fprintf(activity_file ,"%-4.2f - %d - %d - %*d: %c - %*d - %*s\n", inst, pid, tid, 4, curr_request->rid, curr_request->gender, 3, curr_request->time, 9, tip);
+		fprintf(activity_file ,"%-6.2f - %-6d - %-12d - %-2d: %c - %-2d - %s\n", inst, pid, tid, curr_request->rid, curr_request->gender, curr_request->time, tip);
 }
 
 float time_difference(struct timeval t0, struct timeval t1) {
