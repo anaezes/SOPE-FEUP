@@ -98,7 +98,18 @@ void inc_sauna(sauna_activity* activity, char gender, char* tip) {
 
 void inc_generator(generator_activity* activity, char gender, char* tip) {
 
-	if(strcmp(tip, "PEDIDO") == 0) {
+	if(strcmp(tip, "GERADO") == 0) {
+
+		if(gender == 'M') {
+			(activity->male_sent)++;
+			(activity->male_generated)++;	
+		} else {
+			(activity->female_sent)++;
+			(activity->female_generated)++;
+		}
+	}
+
+	else if(strcmp(tip, "PEDIDO") == 0) {
 
 		if(gender == 'M')
 			(activity->male_sent)++;
