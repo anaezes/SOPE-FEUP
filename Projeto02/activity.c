@@ -107,6 +107,9 @@ void inc_generator(generator_activity* activity, char gender, char* tip) {
 			(activity->female_sent)++;
 			(activity->female_generated)++;
 		}
+
+		strcpy(tip, "PEDIDO");
+		return;
 	}
 
 	else if(strcmp(tip, "PEDIDO") == 0) {
