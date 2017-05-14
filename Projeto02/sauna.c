@@ -24,10 +24,12 @@ typedef struct thread_args_struct {
 	request* requestThread;
 	struct timeval start_time;	
 	int* activity_fd;
-	int* freeSeats;
+	request_threads* info;
+	char* gender;
+	//int* freeSeats;
 } thread_args;
 
-/* mutext used to control activity variables increments*/
+/* Mutex used to control activity variables increments. */
 pthread_mutex_t mutex_sauna = PTHREAD_MUTEX_INITIALIZER;
 
 /**
@@ -89,7 +91,17 @@ void* saunaHandler(void* args) {
 	//printf("Request ID: %d exited sauna, em %d milliseconds.\n", newThread->requestThread->rid, elapsed);
 
 	free(args);
-	(newThread->freeSeats)++;
+	//(newThread->freeSeats)++;
+	/*//update sauna gender
+	if(threadsInfo->freeSeats == threadsInfo->saunaSpaces)
+		*gender = NO_GENDER;
+	else
+		*gender = curr_request->gender;*/
+
+	//update of sauna gender
+	if (++(newThread->info->freeSeats) == newThread->info->saunaSpaces)
+		*(newThread->gender) = NO_GENDER;
+
 	sem_post(sem_sauna);
 
 	return NULL;
@@ -120,11 +132,15 @@ int requestDecision(request* curr_request, char* gender, int* activity_fd, struc
 
 	//write activity
 	strcpy(tip, "RECEBIDO");
+
 	//increment activity's value, considering the gender and tip
 	pthread_mutex_lock(&mutex_sauna);
 	inc_sauna(activity, curr_request->gender, tip);
 	pthread_mutex_unlock(&mutex_sauna);
+
 	writeActivity(activity_fd, time_difference(start_time, curr_time), curr_request, getpid(), getpid(), tip, 'S');
+	
+	//Cleaning tip
 	memset(tip,0,strlen(tip));
 
 	if(*gender == NO_GENDER || curr_request->gender == *gender){
@@ -134,7 +150,9 @@ int requestDecision(request* curr_request, char* gender, int* activity_fd, struc
 
 		thread_args* threadsArgs = malloc(sizeof(thread_args));
 		threadsArgs->requestThread = curr_request; 
-		threadsArgs->freeSeats = &(threadsInfo->freeSeats); 
+		//threadsArgs->freeSeats = &(threadsInfo->freeSeats);
+		threadsArgs->info = threadsInfo; 
+		threadsArgs->gender = gender;
 		threadsArgs->start_time = start_time;
 		threadsArgs->activity_fd = activity_fd;
 		//threadsArgs->tip = tip;
@@ -162,12 +180,8 @@ int requestDecision(request* curr_request, char* gender, int* activity_fd, struc
 		inc_sauna(activity, curr_request->gender, tip);
 		pthread_mutex_unlock(&mutex_sauna);
 		
-		
-		//update sauna gender
-		if(threadsInfo->freeSeats == threadsInfo->saunaSpaces)
-			*gender = NO_GENDER;
-		else
-			*gender = curr_request->gender;
+		//Until new thread is over, the gender stays the same
+		*gender = curr_request->gender;
 
 		send_confirmation(fd);
 
@@ -218,7 +232,7 @@ int main (int argc, char** argv) {
 		printf("Error on function confFifos().\n");
 		exit(2);
 	} else
-	printf("Successfuly established connection to generator.c.\n\n");
+		printf("Successfuly established connection to generator.c.\n\n");
 
 
 	//open activity file
@@ -228,7 +242,7 @@ int main (int argc, char** argv) {
 		printf("Error opening sauna's activity file\n");
 		exit(2);
 	}else
-	printf("Sauna's activity file was successfuly opened.\n\n");	
+		printf("Sauna's activity file was successfuly opened.\n\n");	
 
 	//Installing atexitHandler
 	atexit(destroyFifos);
@@ -238,7 +252,7 @@ int main (int argc, char** argv) {
 
 
 	//Ensure that the semaph does not exist
-	sem_unlink("/sem_sauna");
+	sem_unlink("/sem_sauna");	//TODO: Não devia ser saunaSpaces+1?
 	sem_sauna = sem_open("/sem_sauna", O_CREAT, SEMAPHORE_MODE, saunaSpaces);
 	if(sem_sauna == SEM_FAILED) {
 		perror("Error creating semaphore for sauna.\n");
@@ -274,10 +288,10 @@ int main (int argc, char** argv) {
 			break;
 		}
 
-			requestDecision(rReq, &gender, &activity_fd, start_time, threadsInfo, fd, activity_values);
-			
+		requestDecision(rReq, &gender, &activity_fd, start_time, threadsInfo, fd, activity_values);	
 	}
 
+	//TODO: Por o contador em x de um array?
 	int i = 0; 
 	while(i < threadsInfo->nRequests) {
 		pthread_join(threadsInfo->threads[i], NULL);
