@@ -28,6 +28,8 @@ typedef struct thread_args_struct {
 	int freeSeats;
 } thread_args;
 
+/* mutext used to control activity variables increments*/
+pthread_mutex_t mutex_sauna = PTHREAD_MUTEX_INITIALIZER;
 
 /**
  * Function used to create and set the FIFO's, by directing them accordingly.
@@ -117,13 +119,17 @@ int requestDecision(request* curr_request, char* gender, int* activity_fd, struc
 	//write activity
 	strcpy(tip, "RECEBIDO");
 	//increment activity's value, considering the gender and tip
+	pthread_mutex_lock(&mutex_sauna);
 	inc_sauna(activity, curr_request->gender, tip);
+	pthread_mutex_unlock(&mutex_sauna);
 	writeActivity(activity_fd, time_difference(start_time, curr_time), curr_request, getpid(), getpid(), tip, 'S');
 	memset(tip,0,strlen(tip));
 
 	if(*gender == NO_GENDER || curr_request->gender == *gender){
 		threadsInfo->freeSeats--;
 		printf("\n\nRequest ID: %d is on, gender %c, with time: %d\n", curr_request->rid, curr_request->gender, curr_request->time);
+
+		strcpy(tip, "SERVIDO");
 
 		thread_args* threadsArgs = malloc(sizeof(thread_args));
 		threadsArgs->requestThread = curr_request; 
@@ -139,7 +145,6 @@ int requestDecision(request* curr_request, char* gender, int* activity_fd, struc
 		pthread_attr_init(&new_user_attr); // get default pthread definitions
 		pthread_attr_setdetachstate(&new_user_attr, PTHREAD_CREATE_JOINABLE);
 
-		strcpy(tip, "SERVIDO");
 
 		if((pthread_res = pthread_create(&new_user_tid, &new_user_attr, &saunaHandler, (void *)threadsArgs)) != TRUE){
 			printf("Error creating generator's thread: %s", strerror(pthread_res));
@@ -151,7 +156,9 @@ int requestDecision(request* curr_request, char* gender, int* activity_fd, struc
 		threadsInfo->nRequests++;
 		
 		//increment activity's value, considering the gender and tip
+		pthread_mutex_lock(&mutex_sauna);
 		inc_sauna(activity, curr_request->gender, tip);
+		pthread_mutex_unlock(&mutex_sauna);
 		
 		
 		//update sauna gender
@@ -170,7 +177,9 @@ int requestDecision(request* curr_request, char* gender, int* activity_fd, struc
 		strcpy(tip, "REJEITADO");
 		gettimeofday(&curr_time, 0);
 		//increment activity's value, considering the gender and tip
+		pthread_mutex_lock(&mutex_sauna);
 		inc_sauna(activity, curr_request->gender, tip);
+		pthread_mutex_unlock(&mutex_sauna);
 		writeActivity(activity_fd, time_difference(start_time, curr_time), curr_request, getpid(), getpid(), tip, 'S');
 
 		printf("\n\nRequest ID DENIED: %d\n", curr_request->rid);
