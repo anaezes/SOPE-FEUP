@@ -70,11 +70,8 @@ int confFifos (int* fd) {
 void* saunaHandler(void* args) {
 	sem_wait(sem_sauna);
 
-	printf("SAUNA HANDLER!!!!\n");
-
 	thread_args* newThread = (thread_args*) args;
 	char tip[10];
-	printf("Request ID: %d is in sauna\n", newThread->requestThread->rid);
 
 	struct timeval curr_time;
 
@@ -83,7 +80,6 @@ void* saunaHandler(void* args) {
 	//write activity
 	strcpy(tip, "SERVIDO");
 	gettimeofday(&curr_time, 0);
-	//TODO: AQUI nao ha incremento???
 	writeActivity(newThread->activity_fd, time_difference(newThread->start_time, curr_time), newThread->requestThread, getpid(), (int)pthread_self(), tip, 'S');
 
 	//update of sauna gender
@@ -137,7 +133,6 @@ int requestDecision(request* curr_request, char* gender, int* activity_fd, struc
 		pthread_mutex_lock(&mutex_spaces);
 		threadsInfo->freeSeats--;
 		pthread_mutex_unlock(&mutex_spaces);
-		printf("\n\nRequest ID: %d is on, gender %c, with time: %d\n", curr_request->rid, curr_request->gender, curr_request->time);
 
 		thread_args* threadsArgs = malloc(sizeof(thread_args));
 		threadsArgs->requestThread = curr_request; 
@@ -179,11 +174,11 @@ int requestDecision(request* curr_request, char* gender, int* activity_fd, struc
 		//write activity
 		strcpy(tip, "REJEITADO");
 		gettimeofday(&curr_time, 0);
+		
 		//increment activity's value, considering the gender and tip
 		inc_sauna(activity, curr_request->gender, tip);
 		writeActivity(activity_fd, time_difference(start_time, curr_time), curr_request, getpid(), getpid(), tip, 'S');
 
-		printf("\n\nRequest ID DENIED: %d\n", curr_request->rid);
 		writeRequest(curr_request, fd);
 		return FALSE;
 	}
@@ -226,8 +221,7 @@ int main (int argc, char** argv) {
 	if((activity_fd = openActivityFile('S')) == FALSE){
 		printf("Error opening sauna's activity file\n");
 		exit(2);
-	}else
-		printf("Sauna's activity file was successfuly opened.\n\n");	
+	}
 
 	//Installing atexitHandler
 	atexit(destroyFifos);

@@ -17,13 +17,12 @@ typedef struct arg_struct {
     int numRequests;		/**< Number of Requests that shall be generated */
     int maxTime;			/**< Maximum Duration time that a Request can have, in miliSeconds. */
     int* fd;				/**< Array containing the File Descriptors for the FIFO's. */
-    int* activity_fd;        /**< File Descriptor for the generator's activity file*/
+    int* activity_fd;       /**< File Descriptor for the generator's activity file*/
     generator_activity* activity;
 } args;
 
 /**< Initial program time */
 struct timeval start_time;
-
 
 
 /**
@@ -89,9 +88,6 @@ void *generator(void * arguments){
 		
 		//Updating the Generator's Activity
 		update_gen_activity(user_args->activity_fd, user_args->activity, new_request, tip, start_time, curr_time);
-		/*gettimeofday(&curr_time, 0);
-		inc_generator(user_args->activity, new_request->gender, tip);
-		writeActivity(user_args->activity_fd, time_difference(start_time, curr_time), new_request, getpid(), 0, tip, 'G');*/
 	}
 
     pthread_exit(NULL);
@@ -131,9 +127,6 @@ int updateRequest(request* received_req, int generated_req, int* processed_req, 
 				printf("Failed upon closing the fd[EXIT]\n");
 			return TRUE;
 		}
-		/*gettimeofday(&curr_time, 0); // get current time
-		inc_generator(activity, received_req->gender, tip);
-		writeActivity(activity_fd, time_difference(start_time, curr_time), received_req, getpid(), 0, tip, 'G');*/
 	} else {
 
 		//Increment and write again to sauna
@@ -142,9 +135,6 @@ int updateRequest(request* received_req, int generated_req, int* processed_req, 
 
 		strcpy(tip, "PEDIDO");
 		update_gen_activity(activity_fd, activity, received_req, tip, start_time, curr_time);
-		/*gettimeofday(&curr_time, 0);
-		inc_generator(activity, received_req->gender, tip);
-		writeActivity(activity_fd,time_difference(start_time, curr_time) , received_req, getpid(), 0, tip, 'G');*/
 	}
 
 	return FALSE;
@@ -181,10 +171,8 @@ int requestListener(int generated_req, int* processed_req, int* fd, int* activit
 			return FALSE;
 	}
 
+	//Update activity with the received request
 	update_gen_activity(activity_fd, activity, received_req, tip, start_time, curr_time);
-	/*gettimeofday(&curr_time, 0);
-	inc_generator(activity, received_req->gender, tip);
-	writeActivity(activity_fd, time_difference(start_time, curr_time), received_req, getpid(), 0,tip, 'G');*/
 
 	return updateRequest(received_req, generated_req, processed_req, fd, activity_fd, activity);
 }
@@ -193,7 +181,7 @@ int main(int argc, char** argv)
 {
 	//Number of arguments verification
 	if (argc != 3) {
-		printf("Usage: ./generator <number of Requests> <máx Time for each Request>\n");
+		printf("Usage: ./generator <number of Requests> <max Time for each Request>\n");
 		exit(1);
 	}
 
@@ -203,9 +191,7 @@ int main(int argc, char** argv)
 	if (confFifos(fd) == FALSE) {
 		printf("Error on function confFifos().\n");
 		exit(2);
-	} else
-		printf("Successfuly established connection to sauna.c.\n\n");
-
+	}
 
 	//Open activity file
 	int activity_fd;

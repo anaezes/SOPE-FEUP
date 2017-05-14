@@ -58,7 +58,6 @@ typedef struct sauna_struct
  */
 int openActivityFile(char file);
 
-
 /**
  * Function used to write and activity to a activity file. (TODO:????????)
  *

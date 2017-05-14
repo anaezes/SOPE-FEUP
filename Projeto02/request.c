@@ -34,12 +34,10 @@ request* readRequest(int* fd) {
 
 	//When read_result = 0, both programs should end
 	if (read_result == 0) {
-		printf("The other end closed this FIFO, returning request with rid = FIFO_CLOSED.\n");	//TODO: ELIMINATE THIS, TEST PURPOSE
 		new_request->rid = FIFO_CLOSED;
 		return new_request;
 	}
 
-	printf("o que estou a ler: %s\n",  reqBuffer);
 	//String interpretation
 	//Interpretation of the Request's RID
 	int end = 0;
@@ -68,15 +66,12 @@ request* readRequest(int* fd) {
 
 	//Intepretation of the number of times the Request was rejected
 	new_request->numRejected = atoi(&reqBuffer[end+=2]);
-	printf("READ:  It: %d  , time: %d   ,   gender: %c, numRejected: %i\n", new_request->rid, new_request->time, new_request->gender, new_request->numRejected); //TODO: Delete this printf -> test purpose only
 
 	return new_request;
 }
 
 
 void writeRequest(request* new_request, int* fd) {
-	printf("WRITE: It: %d  , time: %d   ,   gender: %c\n", new_request->rid, new_request->time, new_request->gender); //TODO: Delete this printf -> test purpose only
-
 	//Filling the Write Buffer
 	char reqBuffer[MAX_REQ_LEN];
 	char extractor[6];
@@ -98,8 +93,6 @@ void writeRequest(request* new_request, int* fd) {
 	//Extracting the number of times the Request was rejected
 	sprintf(extractor, "%d", new_request->numRejected);
 	strcat(reqBuffer, extractor);
-
-	printf("o que estou a escrever: %s\n",  reqBuffer);
 
 	//Writing new Request for other program
 	write(fd[EXIT], reqBuffer, MAX_REQ_LEN);

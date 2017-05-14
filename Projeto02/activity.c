@@ -16,7 +16,6 @@ int openActivityFile(char file) {
 	int activity_fd;
 
 	activity_fd = open(finalpath, (O_WRONLY| O_CREAT), ACTIVITY_FILE_MODE);
-	printf("PID: %d", getpid());
 
 	return activity_fd;
 }
@@ -25,7 +24,7 @@ void writeActivity(int* activity_descriptor, float inst, request* curr_request, 
 
 	FILE* activity_file = fdopen(*activity_descriptor, "wb");
 
-	if(file == OPEN_GENERATOR_FILE)	//TODO: SetW do inst
+	if(file == OPEN_GENERATOR_FILE)
 		fprintf(activity_file ,"%-4.2f - %d - %*d: %c - %*d - %*s\n", inst, pid, 4, curr_request->rid, curr_request->gender, 3, curr_request->time, 10, tip);
 	else	
 		fprintf(activity_file ,"%-4.2f - %d - %d - %*d: %c - %*d - %*s\n", inst, pid, tid, 4, curr_request->rid, curr_request->gender, 3, curr_request->time, 9, tip);
@@ -64,8 +63,13 @@ sauna_activity* init_sauna_activity() {
 }
 
 void update_gen_activity(int *activity_file, generator_activity* activity, request* curr_request, char* tip, struct timeval start_time, struct timeval curr_time) {
-	gettimeofday(&curr_time, 0); // get current time
+	//get current time
+	gettimeofday(&curr_time, 0);
+
+	//Update Statistic Variables
 	inc_generator(activity, curr_request->gender, tip, curr_request);
+
+	//Write activity to the respective files
 	writeActivity(activity_file, time_difference(start_time, curr_time), curr_request, getpid(), 0, tip, 'G');
 }
 
@@ -101,6 +105,7 @@ void inc_generator(generator_activity* activity, char gender, char* tip, request
 	if(strcmp(tip, "PEDIDO") == 0) {
 
 		if (curr_request->numRejected == 0) {
+			
 			if(gender == 'M')
 				(activity->male_generated)++;
 			else
@@ -131,7 +136,7 @@ void inc_generator(generator_activity* activity, char gender, char* tip, request
 }
 
 void print_generator_activity(generator_activity* activity){
-	printf("\nGERADOS:\n");	//TODO: Gerados tem de ser igual ao numero de pedidos? Rever this.
+	printf("GERADOS:\n");
 	printf("HOMENS: %*d,  MULHERES: %*d,  TOTAL: %*d\n\n", 4, activity->male_generated, 4, activity->female_generated, 5, (activity->male_generated+activity->female_generated));
 
 	printf("ENVIADOS:\n");
@@ -145,7 +150,7 @@ void print_generator_activity(generator_activity* activity){
 }
 
 void print_sauna_activity(sauna_activity* activity) {
-	printf("\nRECEBIDOS\n");
+	printf("RECEBIDOS\n");
 	printf("HOMENS: %*d,  MULHERES: %*d,  TOTAL: %*d\n\n", 4, activity->male_received, 4, activity->female_received, 5, (activity->male_received+activity->female_received));
 
 	printf("REJEITADOS:\n");
