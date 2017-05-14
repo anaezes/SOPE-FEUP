@@ -16,15 +16,14 @@ sem_t* sem_sauna;
 typedef struct thread_struct {
 	int nRequests;		
 	pthread_t* threads;
-	int freeSeats;
+	int* freeSeats;
 	int saunaSpaces;
 } request_threads;
 
 typedef struct thread_args_struct {	
 	request* requestThread;
 	struct timeval start_time;	
-	int activity_fd;
-	char* tip;
+	int* activity_fd;
 	int freeSeats;
 } thread_args;
 
@@ -67,8 +66,11 @@ int confFifos (int* fd) {
 //Gerador de multi threads, cada um para cada novo pedido que conté a struct x.
 void* saunaHandler(void* args) {
 	sem_wait(sem_sauna);
-	thread_args* newThread = (thread_args*) args;
 
+	printf("SAUNA HANDLER!!!!\n");
+
+	thread_args* newThread = (thread_args*) args;
+	char tip[10];
 	printf("Request ID: %d is in sauna\n", newThread->requestThread->rid);
 
 	struct timeval curr_time;
@@ -77,17 +79,17 @@ void* saunaHandler(void* args) {
 	usleep((newThread->requestThread->time)*1000);
 
 	//write activity
-	strcpy(newThread->tip, "SERVIDO");
+	strcpy(tip, "SERVIDO");
 	gettimeofday(&curr_time, 0);
 	//TODO: AQUI nao ha incremento???
-	writeActivity(&(newThread->activity_fd), time_difference(newThread->start_time, curr_time), newThread->requestThread, getpid(), (int)pthread_self(), newThread->tip, 'S');
+	writeActivity(newThread->activity_fd, time_difference(newThread->start_time, curr_time), newThread->requestThread, getpid(), (int)pthread_self(), tip, 'S');
 
 	//elapsed = time_difference(start_time, curr_time);
 
 	//printf("Request ID: %d exited sauna, em %d milliseconds.\n", newThread->requestThread->rid, elapsed);
 
 	free(args);
-	newThread->freeSeats++;
+	(newThread->freeSeats)++;
 	sem_post(sem_sauna);
 
 	return NULL;
@@ -126,17 +128,16 @@ int requestDecision(request* curr_request, char* gender, int* activity_fd, struc
 	memset(tip,0,strlen(tip));
 
 	if(*gender == NO_GENDER || curr_request->gender == *gender){
+
 		threadsInfo->freeSeats--;
 		printf("\n\nRequest ID: %d is on, gender %c, with time: %d\n", curr_request->rid, curr_request->gender, curr_request->time);
 
-		strcpy(tip, "SERVIDO");
-
 		thread_args* threadsArgs = malloc(sizeof(thread_args));
 		threadsArgs->requestThread = curr_request; 
-		threadsArgs->freeSeats = threadsInfo->freeSeats; 
+		threadsArgs->freeSeats = &(threadsInfo->freeSeats); 
 		threadsArgs->start_time = start_time;
-		threadsArgs->activity_fd = *activity_fd;
-		threadsArgs->tip = tip;
+		threadsArgs->activity_fd = activity_fd;
+		//threadsArgs->tip = tip;
 	
 		//create detached thread
 		pthread_t new_user_tid;
@@ -151,6 +152,7 @@ int requestDecision(request* curr_request, char* gender, int* activity_fd, struc
 			return FALSE;
 		}
 
+		strcpy(tip, "SERVIDO");
 		//save thread
 		threadsInfo->threads[threadsInfo->nRequests] = new_user_tid;
 		threadsInfo->nRequests++;
@@ -245,13 +247,20 @@ int main (int argc, char** argv) {
 
 	//create and initialize activity values
 	sauna_activity* activity_values = init_sauna_activity();
-
+/*
 	//struct of threads info
 	request_threads threadsInfo;
 	threadsInfo.nRequests = 0; 
 	threadsInfo.threads = malloc(1024*sizeof(pthread_t));
 	threadsInfo.freeSeats = saunaSpaces; 
-	threadsInfo.saunaSpaces = saunaSpaces; 
+	threadsInfo.saunaSpaces = saunaSpaces; */
+
+	//struct of threads info
+	request_threads* threadsInfo = (request_threads*) malloc(sizeof(request_threads));
+	threadsInfo->nRequests = 0; 
+	threadsInfo->threads = malloc(1024*sizeof(pthread_t));
+	threadsInfo->freeSeats = saunaSpaces; 
+	threadsInfo->saunaSpaces = saunaSpaces;
 
 	request* rReq;
 	while (1) {
@@ -265,15 +274,17 @@ int main (int argc, char** argv) {
 			break;
 		}
 
-			requestDecision(rReq, &gender, &activity_fd, start_time, &threadsInfo, fd, activity_values);
+			requestDecision(rReq, &gender, &activity_fd, start_time, threadsInfo, fd, activity_values);
 			
 	}
 
 	int i = 0; 
-	while(i < threadsInfo.nRequests) {
-		pthread_join(threadsInfo.threads[i], NULL);
+	while(i < threadsInfo->nRequests) {
+		pthread_join(threadsInfo->threads[i], NULL);
 		i++;
 	}
+
+	free(threadsInfo->threads);
 
 	//print the total values of the activity
 	print_sauna_activity(activity_values);

@@ -39,6 +39,7 @@ request* readRequest(int* fd) {
 		return new_request;
 	}
 
+	printf("o que estou a ler: %s\n",  reqBuffer);
 	//String interpretation
 	//Interpretation of the Request's RID
 	int end = 0;
@@ -97,6 +98,8 @@ void writeRequest(request* new_request, int* fd) {
 	//Extracting the number of times the Request was rejected
 	sprintf(extractor, "%d", new_request->numRejected);
 	strcat(reqBuffer, extractor);
+
+	printf("o que estou a escrever: %s\n",  reqBuffer);
 
 	//Writing new Request for other program
 	write(fd[EXIT], reqBuffer, MAX_REQ_LEN);
