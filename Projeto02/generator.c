@@ -82,11 +82,7 @@ void *generator(void * arguments){
 
 		//Generating a new Request
 		request* new_request;	
-		//new_request = Request(i, genders[rand() % 2], (rand() % user_args->maxTime) + 1);
-		if(i== 0)
-			new_request = Request(i, genders[0], (rand() % user_args->maxTime) + 1);
-		else
-			new_request = Request(i, genders[1], (rand() % user_args->maxTime) + 1);
+		new_request = Request(i, genders[rand() % 2], (rand() % user_args->maxTime) + 1);
 
 		//Writing the new request to the other program
 		writeRequest(new_request, user_args->fd);

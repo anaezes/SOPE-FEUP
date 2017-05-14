@@ -14,7 +14,8 @@
 sem_t* sem_sauna;
 
 typedef struct thread_struct {
-	int nRequests;		
+	int nRequests;	
+	int currMax;  	
 	pthread_t* threads;
 	int freeSeats;
 	int saunaSpaces;
@@ -76,7 +77,6 @@ void* saunaHandler(void* args) {
 	printf("Request ID: %d is in sauna\n", newThread->requestThread->rid);
 
 	struct timeval curr_time;
-	//int elapsed;
 
 	usleep((newThread->requestThread->time)*1000);
 
@@ -86,24 +86,13 @@ void* saunaHandler(void* args) {
 	//TODO: AQUI nao ha incremento???
 	writeActivity(newThread->activity_fd, time_difference(newThread->start_time, curr_time), newThread->requestThread, getpid(), (int)pthread_self(), tip, 'S');
 
-	//elapsed = time_difference(start_time, curr_time);
-
-	//printf("Request ID: %d exited sauna, em %d milliseconds.\n", newThread->requestThread->rid, elapsed);
-
-	free(args);
-	//(newThread->freeSeats)++;
-	/*//update sauna gender
-	if(threadsInfo->freeSeats == threadsInfo->saunaSpaces)
-		*gender = NO_GENDER;
-	else
-		*gender = curr_request->gender;*/
-
 	//update of sauna gender
 	pthread_mutex_lock(&mutex_spaces);
 	if (++(newThread->info->freeSeats) == newThread->info->saunaSpaces)
 		*(newThread->gender) = NO_GENDER;
 	pthread_mutex_unlock(&mutex_spaces);
 
+	//free(args);
 	sem_post(sem_sauna);
 
 	return NULL;
@@ -152,12 +141,10 @@ int requestDecision(request* curr_request, char* gender, int* activity_fd, struc
 
 		thread_args* threadsArgs = malloc(sizeof(thread_args));
 		threadsArgs->requestThread = curr_request; 
-		//threadsArgs->freeSeats = &(threadsInfo->freeSeats);
 		threadsArgs->info = threadsInfo; 
 		threadsArgs->gender = gender;
 		threadsArgs->start_time = start_time;
 		threadsArgs->activity_fd = activity_fd;
-		//threadsArgs->tip = tip;
 	
 		//create detached thread
 		pthread_t new_user_tid;
@@ -259,18 +246,12 @@ int main (int argc, char** argv) {
 
 	//create and initialize activity values
 	sauna_activity* activity_values = init_sauna_activity();
-/*
-	//struct of threads info
-	request_threads threadsInfo;
-	threadsInfo.nRequests = 0; 
-	threadsInfo.threads = malloc(1024*sizeof(pthread_t));
-	threadsInfo.freeSeats = saunaSpaces; 
-	threadsInfo.saunaSpaces = saunaSpaces; */
 
 	//struct of threads info
 	request_threads* threadsInfo = (request_threads*) malloc(sizeof(request_threads));
 	threadsInfo->nRequests = 0; 
-	threadsInfo->threads = malloc(1024*sizeof(pthread_t));
+	threadsInfo->currMax = 1024;
+    threadsInfo->threads = malloc(threadsInfo->currMax*sizeof(pthread_t));
 	threadsInfo->freeSeats = saunaSpaces; 
 	threadsInfo->saunaSpaces = saunaSpaces;
 
@@ -287,6 +268,10 @@ int main (int argc, char** argv) {
 		}
 
 		requestDecision(rReq, &gender, &activity_fd, start_time, threadsInfo, fd, activity_values);	
+		if(threadsInfo->nRequests == threadsInfo->currMax) {
+                threadsInfo->currMax = 2*threadsInfo->currMax;
+                threadsInfo->threads = (pthread_t *) realloc(threadsInfo->threads, threadsInfo->currMax*sizeof(pthread_t));
+            }
 	}
 
 	//TODO: Por o contador em x de um array?
