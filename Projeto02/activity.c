@@ -65,7 +65,7 @@ sauna_activity* init_sauna_activity() {
 
 void update_gen_activity(int *activity_file, generator_activity* activity, request* curr_request, char* tip, struct timeval start_time, struct timeval curr_time) {
 	gettimeofday(&curr_time, 0); // get current time
-	inc_generator(activity, curr_request->gender, tip);
+	inc_generator(activity, curr_request->gender, tip, curr_request);
 	writeActivity(activity_file, time_difference(start_time, curr_time), curr_request, getpid(), 0, tip, 'G');
 }
 
@@ -96,24 +96,17 @@ void inc_sauna(sauna_activity* activity, char gender, char* tip) {
 	}
 }
 
-void inc_generator(generator_activity* activity, char gender, char* tip) {
+void inc_generator(generator_activity* activity, char gender, char* tip, request* curr_request) {
 
-	if(strcmp(tip, "GERADO") == 0) {
+	if(strcmp(tip, "PEDIDO") == 0) {
 
-		if(gender == 'M') {
-			(activity->male_sent)++;
-			(activity->male_generated)++;	
-		} else {
-			(activity->female_sent)++;
-			(activity->female_generated)++;
+		if (curr_request->numRejected == 0) {
+			if(gender == 'M')
+				(activity->male_generated)++;
+			else
+				(activity->female_generated)++;
 		}
-
-		strcpy(tip, "PEDIDO");
-		return;
-	}
-
-	else if(strcmp(tip, "PEDIDO") == 0) {
-
+		
 		if(gender == 'M')
 			(activity->male_sent)++;
 		else

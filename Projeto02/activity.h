@@ -119,8 +119,9 @@ void inc_sauna(sauna_activity* activity, char gender, char* tip);
  * @param activity. Generator's activity that is counting the values
  * @param gender. gender of the request to be considered
  * @param tip. Description of the request for the activity
+ * @param curr_request. Current Request under evaluation
  */ 
-void inc_generator(generator_activity* activity, char gender, char* tip);
+void inc_generator(generator_activity* activity, char gender, char* tip, request* curr_request);
 
 /*
  * Function that prints the Generator's activity

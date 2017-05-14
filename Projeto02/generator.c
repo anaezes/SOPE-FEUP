@@ -71,7 +71,7 @@ void *generator(void * arguments){
 	char genders[] = {'M', 'F'};
 
 	//values to activity file
-	char tip[] = "GERADO";
+	char tip[] = "PEDIDO";
 	struct timeval curr_time;
 
 	//install random seed, based on time
