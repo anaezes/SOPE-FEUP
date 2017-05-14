@@ -16,7 +16,7 @@ sem_t* sem_sauna;
 typedef struct thread_struct {
 	int nRequests;		
 	pthread_t* threads;
-	int* freeSeats;
+	int freeSeats;
 	int saunaSpaces;
 } request_threads;
 
@@ -24,7 +24,7 @@ typedef struct thread_args_struct {
 	request* requestThread;
 	struct timeval start_time;	
 	int* activity_fd;
-	int freeSeats;
+	int* freeSeats;
 } thread_args;
 
 /* mutext used to control activity variables increments*/
