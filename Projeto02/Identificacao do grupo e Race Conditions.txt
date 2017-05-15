@@ -8,4 +8,4 @@ Luís Noites Martins
 
 Race Condition:
 
-Para evitar a situação de race condition, aquando do incremento das variável que controla o numero de lugares disponíveis na sauna, foi utilizado um mutex no ficheiro sauna.c. Recorrendo as funções pthread_mutex_lock e pthread_mutex_unlock garante-se, assim, que mesmo que existam várias threads a correr em simultâneo, em cada instante apenas uma poderá alterar esta variável que controla o número de pedidos que estão na sauna e se um pedido pode ou não ser atendido.
+Para evitar a situação de race condition, aquando do incremento das variáveis que controlam o numero de lugares disponíveis na sauna, foi utilizado um semaforo no ficheiro sauna.c. Recorrendo as funções pthread_mutex_lock e pthread_mutex_unlock garante-se, assim, que mesmo que existam várias threads a correr em simultâneo, em cada instante apenas uma poderá alterar esta variável que controla o número de pedidos que estão na sauna e se um pedido pode ou não ser atendido.
